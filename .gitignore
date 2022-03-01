@@ -1,0 +1,4 @@
+# Specify filepatterns you want git to ignore.
+jcapt.sublime-workspace
+service/model
+__pycache__
