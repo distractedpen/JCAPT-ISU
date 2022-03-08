@@ -15,13 +15,15 @@ const recText = document.querySelector('.rec-text');
 const senText = document.querySelector('.sen-text');
 const previous = document.querySelector('.previous');
 const next = document.querySelector('.next');
-let current_sentence = 0
+const listenContainer = document.querySelector('.listen-container');
+const listenBtn = document.querySelector('.listen-btn');
+let current_sentence = 0;
 
 
 /**********************************
  * API Calls
  **********************************/
-function fetchTextEle(index) {
+function fetchText(index) {
 
 	const payload = {
 		method: "POST",
@@ -34,12 +36,12 @@ function fetchTextEle(index) {
 			sent_index: current_sentence
 		})
 	};
-	console.log(payload)
 	fetch("http://localhost:5000/getText", payload)
 	.then( (response) => response.json() )
 	.then( (json) => {
 		console.log(json.sentence, json.endOfList)
 	    senText.innerHTML = json.sentence;
+
 	    if (json.endOfList)
 		   	next.setAttribute('disabled', '');
 		else
@@ -55,7 +57,40 @@ function fetchTextEle(index) {
 		return err; 
 	});	
 }
-fetchTextEle(current_sentence);
+
+function fetchTextAudio(index) {
+	const payload = {
+		method: "POST",
+		mode: "cors",
+		cache: "no-cache",
+		headers: {
+			"Content-Type": 'application/json'
+		},
+		body: JSON.stringify({
+			audiofileIndex: index,
+		})
+	};
+	fetch("http://localhost:5000/getAudio", payload)
+	.then( (response) => response.blob())
+	.then( (blob) => {
+	    const r_audio = document.querySelector(".listen-audio");
+	    if (r_audio !== null)
+	    	listenContainer.removeChild(r_audio);
+
+	    let audio = document.createElement("audio");
+	    audio.className = "listen-audio";
+
+	    audio.src = window.URL.createObjectURL(blob);
+	    audio.setAttribute("controls", 'disabled');
+	    listenContainer.appendChild(audio);
+
+	    listenBtn.onclick = function () {
+	    	audio.play();
+	    }
+	})
+}
+fetchText(current_sentence);
+fetchTextAudio(current_sentence);
 
 
 /********************************
@@ -73,12 +108,14 @@ function blobToFile(blob, filename) {
  ********************************/
 previous.onclick = function() {
 	current_sentence--;
-	fetchTextEle(current_sentence);
+	fetchText(current_sentence);
+	fetchTextAudio(current_sentence);
 }
 
 next.onclick = function() {
 	current_sentence++;
-	fetchTextEle(current_sentence);
+	fetchText(current_sentence);
+	fetchTextAudio(current_sentence);
 }
 
 
@@ -182,9 +219,3 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 } else {
 	console.log("getUserMedia not supported on your browser!");
 }
-
-
-
-
-// on page load, need to request sentence list from '/list' endpoint
-// display each setence for the user to speak
