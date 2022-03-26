@@ -52,39 +52,156 @@ with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
 #  Helper Functions
 ###############################
 
-def compare_results(resultText):
-    global current_sentence
-    # compare spoken result with the actual sentence.
-    # compare character by character.
-    # assuming we go through list in order, with no change.
+MISMATCH_SCORE = -1
+INDEL_SCORE = -1
+MATCH_SCORE = 1
+
+
+def print_dp_table(table, result, correct, R, C):
+
+    for i in range(C+1):
+        if i == 0:
+            print('　'*7, end=' ')
+        else:
+            print(f"{correct[i-1]:3s}", end='　')
+    print()
+
+    for j in range(R+1):
+        for i in range(C+1):
+            if j == 0:
+                if i == 0:
+                    print(' '*4, end='　')
+                print(f"{table[j][i]:4d}", end='　')
+            elif i == 0 and j <= len(result):
+                print(f"{result[j-1]:3s}", end='　')
+                print(f"{table[j][i]:4d}", end='　')
+            else:
+                print(f"{table[j][i]:4d}", end='　')
+        print()
+
+
+def print_align_table(table, result, correct, R, C):
+
+    for i in range(C+1):
+        if i == 0:
+            print('　'*5, end=' ')
+        else:
+            print(f"{correct[i-1]:3s}", end='　')
+    print()
+
+    for j in range(R+1):
+        for i in range(C+1):
+            if j == 0:
+                if i == 0:
+                    print(' '*4, end='　')
+                print(f"{table[j][i]:4s}", end='　')
+            elif i == 0 and j <= len(result):
+                print(f"{result[j-1]:3s}", end='　')
+                print(f"{table[j][i]:4s}", end='　')
+            else:
+                print(f"{table[j][i]:4s}", end='　')
+        print()
+
+def print_str_align(str_alignments):
+    print(str_alignments['correct'])
+    for i in range(len(str_alignments['correct'])):
+        if str_alignments['correct'] == str_alignments['result']:
+            print("｜", end='')
+        else:
+            print("　", end='')
+    print()
+    print(str_alignments['result'])
+
+
+def make_dp_table(result, correct, R, C):
+
+    value_table = [[0]*(C+1) for _ in range(R+1)]
+    align_table = [[' ']*(C+1) for _ in range(R+1)]
+    # [ [0,0,0,0,0,...], [0,0,0,...]]  # Columns = Correct | Row = result
+    for j in range(C+1):
+        value_table[0][j] = -j
+    for i in range(R+1):
+        value_table[i][0] = -i
+
+    for i in range(1, R+1):  # rows
+        for j in range(1, C+1): # columns
+            if correct[j-1] == result[i-1]: # correct
+                value_table[i][j] = value_table[i-1][j-1] + MATCH_SCORE
+                align_table[i][j] = '\\'
+            elif value_table[i][j-1] > value_table[i][j]: # indel from top
+                value_table[i][j] = value_table[i][j-1] + INDEL_SCORE
+                align_table[i][j] = '|'
+            # else: #value_table[i-1][j] > value_table[i][j]: # indel from left
+            #     value_table[i][j] = value_table[i-1][j] + INDEL_SCORE
+            #     align_table[i][j] = '-'               
+
+            else: #table[i-1][j-1] > table[i][j-1]: # mismatch
+                value_table[i][j] = value_table[i-1][j-1] + MISMATCH_SCORE
+                align_table[i][j] = '\\'
+    return {'value': value_table, 'alignment': align_table}
+
+
+def determine_alignment(table, result, correct, i, j):
+
+    res_align = ''
+    cor_align = ''
+    align_str = ''
+
+    while i > 0 and j > 0:
+        if i > 0 and j > 0 and result[i-1] == correct[j-1]:
+            res_align = result[i-1] + res_align
+            cor_align = correct[j-1] + cor_align
+            align_str = "+" + align_str
+            i -= 1
+            j -= 1
+        elif i > 0 and j > 0 and table[j][i] == table[i-1][j-1] + MISMATCH_SCORE:
+            res_align = result[i-1] + res_align
+            cor_align = correct[j-1] + cor_align
+            align_str = "-" + align_str
+            i -= 1
+            j -= 1
+        # elif i > 0 and table[i][j] == table[i-1][j] + INDEL_SCORE:
+        #     res_align = result[i-1] + res_align
+        #     cor_align = 'ー' + cor_align
+        #     align_str = "ー" + align_str
+        #     i -= 1
+        else:
+            res_align = '＿' + res_align
+            cor_align = correct[j-1] + cor_align
+            align_str = "-" + align_str
+            j -= 1
+
+    return {"result": list(res_align), "correct": list(cor_align), "align_str": list(align_str)}
+
+def compare_results(result_text):
+    #
+    # Dynamic Programming:
+    #   Align Correct Text to Vosk Output
+    # Correct:    私は大_学生です
+    # Ex Output:  私は＿医学＿です
+    # Alignment:  ＋＋ーーーー＋＋
+
 
     # remove spaces from resultText
-    resultText = resultText.replace(" ", "")
+    result = result_text.replace(" ", "")
+    correct = sent_list[current_sentence]
 
-    correct_answer = sent_list[current_sentence]
-    starting_char = correct_answer[0]
-    correct_chars = [0 for i in range(len(correct_answer))]
-    print(correct_answer, starting_char, correct_chars)
-    start_compare = False
-    start_index = 0
-    for index, char in enumerate(resultText):
-        print(char, index)
+    R = len(result)
+    C = len(correct)
 
-        print(f"{char} == {starting_char} ? {char == starting_char}")
-        if not start_compare and char == starting_char:
-            start_compare = True
-            start_index = index
+    tables = make_dp_table(result, correct, R, C)
 
-        if not start_compare:
-            continue
+    str_alignments = determine_alignment(tables['value'], result, correct, R, C)
 
-        if char == correct_answer[index - start_index]:
-            correct_chars[index-start_index] = 1 
+    # print("*"*36)
+    # print_dp_table(tables['value'], result, correct, R, C)
+    # print("*"*36)
+    # print_align_table(tables['alignment'], result, correct, R, C)
+    # print("*"*36)
+    # print_str_align(str_alignments)
+    # print("*"*36)
 
-    if sum(correct_chars) == len(correct_answer):
-        current_sentence += 1
-
-    return list(resultText), list(correct_answer), correct_chars
+    return str_alignments
 
 
 ##############################
@@ -118,8 +235,7 @@ def test():
         result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], "audio_file.wav"))
         result = json.loads(result)
         print(result)
-        
-        listResultText, listCorrectAnswer, listIsCharCorrect = compare_results(result["text"])
+        str_alignment = compare_results(result["text"])
 
         if result:
             print(audio_pathname)
@@ -127,13 +243,8 @@ def test():
             os.remove(os.path.join(audio_pathname, "audio_file.wav"))
             return {
                 "page": "test",
-                "status": "POST success", 
-                "result": 
-                    {
-                        "listResultText": listResultText,
-                        "listCorrectAnswer": listCorrectAnswer,
-                        "listIsCharCorrect": listIsCharCorrect
-                    }
+                "status": "POST success",
+                "result": str_alignment
                 }
 
     return {"page": "test", "status": "online", "result": "Error"}

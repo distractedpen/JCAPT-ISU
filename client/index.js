@@ -157,16 +157,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 					.catch( (err) => { return console.error(err); } );
 				console.log(response);
 
-				const listResultText = response.listResultText;
-				const listCorrectAnswer = response.listCorrectAnswer;
-				const listIsCharCorrect = response.listIsCharCorrect;
+				const correct_aligned = response.correct;
+				const result_aligned = response.result;
+				const align_str = response.align_str;
 
 				recText.innerHTML = "";
-				listResultText.forEach( (char, index) => {
+				align_str.forEach( (char, index) => {
 					let charSpan = document.createElement('span');
-					if (listIsCharCorrect[index] === 0)
+					if (char === "-")
 						charSpan.style.color = "red";
-					charSpan.innerHTML = char;
+					charSpan.innerHTML = result_aligned[index];
 					recText.appendChild(charSpan);
 				});
 
