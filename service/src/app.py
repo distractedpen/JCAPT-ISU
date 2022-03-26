@@ -2,7 +2,7 @@
 # Imports
 ###############################
 import json, subprocess, os
-from flask import Flask, request, url_for
+from flask import Flask, request, url_for, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 
@@ -254,3 +254,15 @@ def get_sentence_list():
             return {"page": "list", "sentence": sent_list[ind], "endOfList": True}
         return {"page": "list", "sentence": sent_list[ind], "endOfList": False}
     return {"page": "list", "status": "error"}
+
+
+@app.route("/getAudio", methods=["POST"])
+def get_sentence_audio():
+    if request.method == "POST":
+        data = json.loads(request.data)
+        ind = data["audiofileIndex"]
+
+        with open(os.path.join(audio_pathname, "test", f"sent{ind}.mp3"), 'rb') as fd:
+            audio_data = fd.read()
+
+        return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
