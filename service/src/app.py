@@ -1,10 +1,10 @@
 ###############################
 # Imports
 ###############################
+import json, subprocess, os
 from flask import Flask, request, url_for
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
-import json, subprocess, os
 
 
 ###############################
@@ -22,6 +22,7 @@ env = {
     "AUDIO_DIR": audio_pathname,
     "LOG_DIR": log_pathname,
     "MODEL_DIR": model_pathname,
+    "DEBUG": False
 }
 
 print(env)
@@ -117,7 +118,7 @@ def make_dp_table(result, correct, R, C):
 
     value_table = [[0]*(C+1) for _ in range(R+1)]
     align_table = [[' ']*(C+1) for _ in range(R+1)]
-    # [ [0,0,0,0,0,...], [0,0,0,...]]  # Columns = Correct | Row = result
+    
     for j in range(C+1):
         value_table[0][j] = -j
     for i in range(R+1):
@@ -131,11 +132,7 @@ def make_dp_table(result, correct, R, C):
             elif value_table[i][j-1] > value_table[i][j]: # indel from top
                 value_table[i][j] = value_table[i][j-1] + INDEL_SCORE
                 align_table[i][j] = '|'
-            # else: #value_table[i-1][j] > value_table[i][j]: # indel from left
-            #     value_table[i][j] = value_table[i-1][j] + INDEL_SCORE
-            #     align_table[i][j] = '-'               
-
-            else: #table[i-1][j-1] > table[i][j-1]: # mismatch
+            else: # table[i-1][j-1] > table[i][j-1]: # mismatch
                 value_table[i][j] = value_table[i-1][j-1] + MISMATCH_SCORE
                 align_table[i][j] = '\\'
     return {'value': value_table, 'alignment': align_table}
@@ -160,11 +157,6 @@ def determine_alignment(table, result, correct, i, j):
             align_str = "-" + align_str
             i -= 1
             j -= 1
-        # elif i > 0 and table[i][j] == table[i-1][j] + INDEL_SCORE:
-        #     res_align = result[i-1] + res_align
-        #     cor_align = 'ー' + cor_align
-        #     align_str = "ー" + align_str
-        #     i -= 1
         else:
             res_align = '＿' + res_align
             cor_align = correct[j-1] + cor_align
@@ -193,13 +185,14 @@ def compare_results(result_text):
 
     str_alignments = determine_alignment(tables['value'], result, correct, R, C)
 
-    # print("*"*36)
-    # print_dp_table(tables['value'], result, correct, R, C)
-    # print("*"*36)
-    # print_align_table(tables['alignment'], result, correct, R, C)
-    # print("*"*36)
-    # print_str_align(str_alignments)
-    # print("*"*36)
+    if env["DEBUG"]:
+        print("*"*36)
+        print_dp_table(tables['value'], result, correct, R, C)
+        print("*"*36)
+        print_align_table(tables['alignment'], result, correct, R, C)
+        print("*"*36)
+        print_str_align(str_alignments)
+        print("*"*36)
 
     return str_alignments
 
