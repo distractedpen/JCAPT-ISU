@@ -151,7 +151,7 @@ def determine_alignment(table, result, correct, i, j):
             align_str = "+" + align_str
             i -= 1
             j -= 1
-        elif i > 0 and j > 0 and table[j][i] == table[i-1][j-1] + MISMATCH_SCORE:
+        elif i > 0 and j > 0 and table[i][j] == table[i-1][j-1] + MISMATCH_SCORE:
             res_align = result[i-1] + res_align
             cor_align = correct[j-1] + cor_align
             align_str = "-" + align_str
