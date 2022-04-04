@@ -39,7 +39,7 @@ function fetchText(index) {
 			sent_index: current_sentence
 		})
 	};
-	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getText`, payload)
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getText/`, payload)
 	.then( (response) => response.json() )
 	.then( (json) => {
 		console.log(json.sentence, json.endOfList)
@@ -72,7 +72,7 @@ function fetchTextAudio(index) {
 			audiofileIndex: index,
 		})
 	};
-	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio/`, payload)
 	.then( (response) => response.blob())
 	.then( (blob) => {
 	    const r_audio = document.querySelector(".listen-audio");
