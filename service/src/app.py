@@ -209,9 +209,9 @@ def _build_cors_preflight_response():
     response.headers.add("Access-Control-Allow-Methods", "*")
     return response
 
-@app.route("/")
-def index():
-    return url_for("/results")
+# @app.route("/")
+# def index():
+#     return url_for("/results")
 
 
 @app.route("/results", methods=["POST", "GET"])
