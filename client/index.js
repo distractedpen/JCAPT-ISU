@@ -19,6 +19,8 @@ const listenContainer = document.querySelector('.listen-container');
 const listenBtn = document.querySelector('.listen-btn');
 let current_sentence = 0;
 
+const env = {"SERVICE_HOST": "http://192.168.254.31", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
+
 
 /**********************************
  * API Calls
@@ -30,13 +32,14 @@ function fetchText(index) {
 		mode: "cors",
 		cache: "no-cache",
 		headers: {
-			"Content-Type": 'application/json'
+			"Content-Type": 'application/json',
+			"Origin": `${env["CLIENT_HOST"]}`
 		},
 		body: JSON.stringify({
 			sent_index: current_sentence
 		})
 	};
-	fetch("http://localhost:5000/getText", payload)
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getText`, payload)
 	.then( (response) => response.json() )
 	.then( (json) => {
 		console.log(json.sentence, json.endOfList)
@@ -51,7 +54,6 @@ function fetchText(index) {
 			previous.setAttribute('disabled', '');
 		else
 			previous.removeAttribute('disabled');
-
 	 }) 
 	.catch( (err) => { 
 		return err; 
@@ -70,7 +72,7 @@ function fetchTextAudio(index) {
 			audiofileIndex: index,
 		})
 	};
-	fetch("http://localhost:5000/getAudio", payload)
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
 	.then( (response) => response.blob())
 	.then( (blob) => {
 	    const r_audio = document.querySelector(".listen-audio");
@@ -188,7 +190,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 					body: audioFile
 				};
 
-				const response = await fetch("http://localhost:5000/results", payload)
+				const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`, payload)
 					.then( (response) => { return response.json(); } )	
 					.then( (data) => { return data.result } )
 					.catch( (err) => { return console.error(err); } );
