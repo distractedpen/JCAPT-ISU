@@ -243,6 +243,7 @@ def test():
     return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST"])
+@cross_origin()
 def get_sentence_list():
     global current_sentence
     if request.method == "POST":
@@ -257,6 +258,7 @@ def get_sentence_list():
 
 
 @app.route("/getAudio", methods=["POST"])
+@cross_origin()
 def get_sentence_audio():
     if request.method == "POST":
         data = json.loads(request.data)
