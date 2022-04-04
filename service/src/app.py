@@ -214,7 +214,7 @@ def _build_cors_preflight_response():
 #     return url_for("/results")
 
 
-@app.route("/results", methods=["POST", "GET"])
+@app.route("/results", methods=["POST", "GET", "OPTIONS"])
 @cross_origin()
 def test():
     if request.method == "OPTIONS":
@@ -252,7 +252,7 @@ def test():
 
     return {"page": "test", "status": "online", "result": "Error"}
 
-@app.route("/getText", methods=["POST"])
+@app.route("/getText", methods=["POST", "OPTIONS"])
 @cross_origin()
 def get_sentence_list():
     global current_sentence
@@ -269,11 +269,12 @@ def get_sentence_list():
     return {"page": "list", "status": "error"}
 
 
-@app.route("/getAudio", methods=["POST"])
+@app.route("/getAudio", methods=["POST", "OPTIONS"])
 @cross_origin()
 def get_sentence_audio():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
+
     if request.method == "POST":
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
@@ -282,3 +283,5 @@ def get_sentence_audio():
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
+
+    return {"status": "getAudio is working."}
