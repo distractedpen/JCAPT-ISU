@@ -19,7 +19,7 @@ const listenContainer = document.querySelector('.listen-container');
 const listenBtn = document.querySelector('.listen-btn');
 let current_sentence = 0;
 
-const env = {"SERVICE_HOST": "0.0.0.0", "SERVICE_PORT": "5000", "CLIENT_HOST": "0.0.0.0"}
+const env = {"SERVICE_HOST": "0.0.0.0", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
 
 
 /**********************************
