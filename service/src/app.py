@@ -202,6 +202,13 @@ def compare_results(result_text):
 # App Routes (End Points)
 ##############################
 
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
+    return response
+
 @app.route("/")
 def index():
     return url_for("/results")
@@ -210,6 +217,8 @@ def index():
 @app.route("/results", methods=["POST", "GET"])
 @cross_origin()
 def test():
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
     if request.method == "POST":
 
         audio_data = request.data
@@ -247,6 +256,8 @@ def test():
 @cross_origin()
 def get_sentence_list():
     global current_sentence
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
     if request.method == "POST":
         data = json.loads(request.data)
         print(data)
@@ -261,6 +272,8 @@ def get_sentence_list():
 @app.route("/getAudio", methods=["POST"])
 @cross_origin()
 def get_sentence_audio():
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
     if request.method == "POST":
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
