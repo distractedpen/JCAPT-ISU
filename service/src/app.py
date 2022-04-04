@@ -219,7 +219,6 @@ def _build_cors_preflight_response():
 def test():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
-
     if request.method == "POST":
 
         audio_data = request.data
@@ -254,6 +253,7 @@ def test():
     return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST", "OPTIONS"])
+@cross_origin()
 def get_sentence_list():
     global current_sentence
     if request.method == "OPTIONS":
@@ -269,7 +269,8 @@ def get_sentence_list():
     return {"page": "list", "status": "error"}
 
 
-@app.route("/getAudio", methods=["POST", "OPTIONS"])
+@app.route("/getAudio", methods=["POST", "GET", "OPTIONS"])
+@cross_origin()
 def get_sentence_audio():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
