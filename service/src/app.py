@@ -36,8 +36,6 @@ print(env)
 app = Flask(__name__)
 cors = CORS(app, resources=r'/.*',
     origins="*", methods="*", allow_headers="*", headers='Content-Type')
-app.run("0.0.0.0", port=8000)
-
 wav_parser = WavParser(env["MODEL_DIR"])
 
 # set up sentence list
@@ -290,3 +288,9 @@ def get_sentence_audio():
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
 
     return {"status": "getAudio is working."}
+
+
+##############################
+# Start App
+##############################
+app.run("0.0.0.0", port=8000)
