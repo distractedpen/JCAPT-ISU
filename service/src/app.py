@@ -36,7 +36,7 @@ print(env)
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS-HEADERS'] = 'Content-Type'
-app.config("0.0.0.0", port=8000)
+app.run("0.0.0.0", port=8000)
 
 wav_parser = WavParser(env["MODEL_DIR"])
 
