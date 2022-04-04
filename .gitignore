@@ -2,4 +2,4 @@
 jcapt.sublime-workspace
 service/model
 __pycache__
-/service/logs/*
+service/logs/*
