@@ -212,7 +212,7 @@ def status():
     return {"status": "online", "method": "GET"}
 
 
-@app.route("/results", methods=["POST", "GET", "OPTIONS"])
+@app.route("/results", methods=["POST", "GET"])
 @cross_origin()
 def test():
 
@@ -249,7 +249,7 @@ def test():
 
     return {"page": "test", "status": "online", "result": "Error"}
 
-@app.route("/getText", methods=["POST", "OPTIONS"])
+@app.route("/getText", methods=["POST"])
 @cross_origin()
 def get_sentence_list():
     global current_sentence
@@ -265,7 +265,7 @@ def get_sentence_list():
     return {"page": "list", "status": "error"}
 
 
-@app.route("/getAudio", methods=["POST", "GET", "OPTIONS"])
+@app.route("/getAudio", methods=["POST"])
 @cross_origin()
 def get_sentence_audio():
 
