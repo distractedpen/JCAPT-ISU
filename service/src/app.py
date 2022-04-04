@@ -211,9 +211,15 @@ def _build_cors_preflight_response():
 ##############################
 
 
-# @app.route("/")
-# def index():
-#     return url_for("/results")
+@app.route("/")
+def index():
+    return url_for("/status")
+
+@app.route("/status", methods=["GET", "POST"])
+def status():
+    if request.method == "POST":
+        return {"status": "online", "method": "POST"}
+    return {"status": "online", "method": "GET"}
 
 
 @app.route("/results", methods=["POST", "GET", "OPTIONS"])
