@@ -34,8 +34,8 @@ print(env)
 ################################
 
 app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS-HEADERS'] = 'Content-Type'
+cors = CORS(app, resources=r'/.*',
+    origins="*", methods="*", allow_headers="*", headers='Content-Type')
 app.run("0.0.0.0", port=8000)
 
 wav_parser = WavParser(env["MODEL_DIR"])
@@ -197,11 +197,6 @@ def compare_results(result_text):
 
     return str_alignments
 
-
-##############################
-# App Routes (End Points)
-##############################
-
 def _build_cors_preflight_response():
     response = make_response()
     response.headers.add("Access-Control-Allow-Origin", "*")
@@ -209,13 +204,19 @@ def _build_cors_preflight_response():
     response.headers.add("Access-Control-Allow-Methods", "*")
     return response
 
+
+
+##############################
+# App Routes (End Points)
+##############################
+
+
 # @app.route("/")
 # def index():
 #     return url_for("/results")
 
 
 @app.route("/results", methods=["POST", "GET", "OPTIONS"])
-@cross_origin()
 def test():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
@@ -253,7 +254,6 @@ def test():
     return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST", "OPTIONS"])
-@cross_origin()
 def get_sentence_list():
     global current_sentence
     if request.method == "OPTIONS":
@@ -270,7 +270,6 @@ def get_sentence_list():
 
 
 @app.route("/getAudio", methods=["POST", "GET", "OPTIONS"])
-@cross_origin()
 def get_sentence_audio():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
