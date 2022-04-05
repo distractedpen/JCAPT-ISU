@@ -34,9 +34,8 @@ print(env)
 ################################
 
 app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS-HEADERS'] = 'Content-Type'
-
+cors = CORS(app, resources=r'/.*',
+    origins="*", methods="*", allow_headers="*", headers='Content-Type')
 wav_parser = WavParser(env["MODEL_DIR"])
 
 # set up sentence list
@@ -196,19 +195,27 @@ def compare_results(result_text):
 
     return str_alignments
 
-
 ##############################
 # App Routes (End Points)
 ##############################
 
 @app.route("/")
+@cross_origin()
 def index():
-    return url_for("/results")
+    return url_for("status")
+
+@app.route("/status", methods=["GET", "POST"])
+@cross_origin()
+def status():
+    if request.method == "POST":
+        return {"status": "online", "method": "POST"}
+    return {"status": "online", "method": "GET"}
 
 
 @app.route("/results", methods=["POST", "GET"])
 @cross_origin()
 def test():
+
     if request.method == "POST":
 
         audio_data = request.data
@@ -243,8 +250,10 @@ def test():
     return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST"])
+@cross_origin()
 def get_sentence_list():
     global current_sentence
+
     if request.method == "POST":
         data = json.loads(request.data)
         print(data)
@@ -257,7 +266,9 @@ def get_sentence_list():
 
 
 @app.route("/getAudio", methods=["POST"])
+@cross_origin()
 def get_sentence_audio():
+
     if request.method == "POST":
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
@@ -266,3 +277,11 @@ def get_sentence_audio():
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
+
+    return {"status": "getAudio is working."}
+
+
+##############################
+# Start App
+##############################
+app.run("0.0.0.0", port=8000)
