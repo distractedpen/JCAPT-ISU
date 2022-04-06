@@ -111,8 +111,8 @@ def test():
     if request.method == "POST":
 
         audio_data = request.data
-        file_name = time.time() + str(file_name_padding)
-        file_name_padding += 1
+        file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
+        file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
 
         with open(os.path.join(env["AUDIO_DIR"], file_name+".ogg"), "wb") as fd:
             fd.write(audio_data)
