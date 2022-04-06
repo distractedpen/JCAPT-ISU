@@ -14,14 +14,16 @@ from NWAlignment import print_dp_table, print_align_table, print_str_align, make
 os.chdir("../..")
 base_path = os.getcwd()
 list_pathname = os.path.join(os.getcwd(), "service/text")
-audio_pathname = os.path.join(os.getcwd(), "service/audio")
+recording_pathname = os.path.join(os.getcwd(), "service/audio/recordings")
+example_audio_pathname = os.path.join(os.getcwd(), "service/audio/examples")
 log_pathname = os.path.join(os.getcwd(), "service/logs")
 model_pathname = os.path.join(os.getcwd(), "service/model")
 ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
 
 env = {
     "LIST_DIR": list_pathname,
-    "AUDIO_DIR": audio_pathname,
+    "RECORDING_DIR": recording_pathname,
+    "EXAMPLE_AUDIO_DIR": example_audio_pathname,
     "LOG_DIR": log_pathname,
     "MODEL_DIR": model_pathname,
     "SSL_DIR": ssl_pathname,
@@ -103,7 +105,7 @@ def status():
     return {"status": "online", "method": "GET"}
 
 
-@app.route("/results", methods=["POST", "GET"])
+@app.route("/results", methods=["POST"])
 @cross_origin()
 def test():
     global file_name_padding
@@ -121,27 +123,19 @@ def test():
         with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
             subprocess.run(
                 ["ffmpeg",
-                 "-i", os.path.join(env["AUDIO_DIR"], file_name+".ogg"),
+                 "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
                  "-ar", "48000", "-ac", "1",
-                 os.path.join(audio_pathname, file_name+".wav")],
+                 os.path.join(recording_pathname, file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
 
-        result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], file_name+".wav"))
+        result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
-        print(result)
         str_alignment = compare_results(result["text"])
 
         if result:
-            print(audio_pathname)
-            # os.remove(os.path.join(audio_pathname, file_name+".ogg"))
-            # os.remove(os.path.join(audio_pathname, file_name+".wav"))
-            return {
-                "page": "test",
-                "status": "POST success",
-                "result": str_alignment
-                }
+            return { "status": "success", "result": str_alignment}
+        return {"status": "failure", "result": ""}
 
-    return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST"])
 @cross_origin()
@@ -150,13 +144,11 @@ def get_sentence_list():
 
     if request.method == "POST":
         data = json.loads(request.data)
-        print(data)
         ind = data["sent_index"]
         current_sentence = ind
         if ind == len(sent_list)-1:
             return {"page": "list", "sentence": sent_list[ind], "endOfList": True}
         return {"page": "list", "sentence": sent_list[ind], "endOfList": False}
-    return {"page": "list", "status": "error"}
 
 
 @app.route("/getAudio", methods=["POST"])
@@ -167,12 +159,10 @@ def get_sentence_audio():
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
 
-        with open(os.path.join(audio_pathname, "test", f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(example_audio_pathname, "test", f"sent{ind}.mp3"), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
-
-    return {"status": "getAudio is working."}
 
 
 ##############################
