@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import json, subprocess, os
+import json, subprocess, os, datetime
 from flask import Flask, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -43,6 +43,7 @@ wav_parser = WavParser(env["MODEL_DIR"])
 # set up sentence list
 current_sentence = 0
 sent_list = []
+file_name_padding = 0
 with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
     for line in fd:
         line = line.strip("\n")
@@ -111,17 +112,18 @@ def test():
     if request.method == "POST":
 
         audio_data = request.data
+        file_name = datetime.now() + str(file_name_padding)
 
-        with open(os.path.join(env["AUDIO_DIR"], "audio_file.ogg"), "wb") as fd:
+        with open(os.path.join(env["AUDIO_DIR"], file_name+".ogg"), "wb") as fd:
             fd.write(audio_data)
 
         # convert data from ogg to wav using a subprocess
         with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
             subprocess.run(
                 ["ffmpeg",
-                 "-i", os.path.join(env["AUDIO_DIR"], "audio_file.ogg"),
+                 "-i", os.path.join(env["AUDIO_DIR"], file_name+".ogg"),
                  "-ar", "48000", "-ac", "1",
-                 os.path.join(audio_pathname, "audio_file.wav")],
+                 os.path.join(audio_pathname, file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
 
         result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], "audio_file.wav"))
@@ -131,8 +133,8 @@ def test():
 
         if result:
             print(audio_pathname)
-            os.remove(os.path.join(audio_pathname, "audio_file.ogg"))
-            os.remove(os.path.join(audio_pathname, "audio_file.wav"))
+            # os.remove(os.path.join(audio_pathname, file_name+".ogg"))
+            # os.remove(os.path.join(audio_pathname, file_name+".wav"))
             return {
                 "page": "test",
                 "status": "POST success",
