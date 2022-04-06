@@ -126,7 +126,7 @@ def test():
                  os.path.join(audio_pathname, file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
 
-        result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], "audio_file.wav"))
+        result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], file_name+".wav"))
         result = json.loads(result)
         print(result)
         str_alignment = compare_results(result["text"])
