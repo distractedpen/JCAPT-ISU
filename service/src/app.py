@@ -2,7 +2,7 @@
 # Imports
 ###############################
 import json, subprocess, os
-from flask import Flask, request, url_for, make_response
+from flask import Flask, request, url_for, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 
@@ -202,7 +202,7 @@ def compare_results(result_text):
 @app.route("/")
 @cross_origin()
 def index():
-    return url_for("status")
+    return render_template("index.html")
 
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
