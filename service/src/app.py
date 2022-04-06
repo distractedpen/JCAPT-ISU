@@ -159,7 +159,7 @@ def get_sentence_audio():
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
 
-        with open(os.path.join(example_audio_pathname, "test", f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(example_audio_pathname, f"sent{ind}.mp3"), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
