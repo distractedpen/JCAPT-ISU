@@ -17,17 +17,18 @@ list_pathname = os.path.join(os.getcwd(), "service/text")
 audio_pathname = os.path.join(os.getcwd(), "service/audio")
 log_pathname = os.path.join(os.getcwd(), "service/logs")
 model_pathname = os.path.join(os.getcwd(), "service/model")
+ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
 
 env = {
     "LIST_DIR": list_pathname,
     "AUDIO_DIR": audio_pathname,
     "LOG_DIR": log_pathname,
     "MODEL_DIR": model_pathname,
+    "SSL_DIR": ssl_pathname,
     "DEBUG": False
 }
 
 print(env)
-
 
 
 ################################
@@ -175,4 +176,4 @@ def get_sentence_audio():
 ##############################
 # Start App
 ##############################
-app.run("0.0.0.0", port=8000)
+app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))
