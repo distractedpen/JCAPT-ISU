@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import json, subprocess, os, time, signal
+import sys, json, subprocess, os, time, signal
 from flask import Flask, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -62,6 +62,7 @@ def recording_cleanup_handler(sig, frame):
     print("Cleaning Recordings directory...")
     for file in os.scandir(env["RECORDING_DIR"]):
         os.remove(file)
+    sys.exit(0)
 
 def compare_results(result_text):
     #
