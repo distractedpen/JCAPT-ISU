@@ -59,6 +59,7 @@ with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
 ###############################
 
 def recording_cleanup_handler(sig, frame):
+    print("Cleaning Recordings directory...")
     for file in os.scandir(env["RECORDING_DIR"]):
         os.remove(file)
 
