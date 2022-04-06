@@ -93,8 +93,6 @@ def compare_results(result_text):
 @app.route("/")
 @cross_origin()
 def index():
-    global current_sentence
-
     return render_template("index.html")
 
 @app.route("/status", methods=["GET", "POST"])
@@ -108,11 +106,13 @@ def status():
 @app.route("/results", methods=["POST", "GET"])
 @cross_origin()
 def test():
+    global file_name_padding
 
     if request.method == "POST":
 
         audio_data = request.data
-        file_name = datetime.now() + str(file_name_padding)
+        file_name = datetime.datetime.now() + str(file_name_padding)
+        file_name_padding += 1
 
         with open(os.path.join(env["AUDIO_DIR"], file_name+".ogg"), "wb") as fd:
             fd.write(audio_data)
