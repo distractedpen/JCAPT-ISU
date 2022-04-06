@@ -116,7 +116,7 @@ def test():
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
 
-        with open(os.path.join(env["AUDIO_DIR"], file_name+".ogg"), "wb") as fd:
+        with open(os.path.join(env["RECORDING_DIR"], file_name+".ogg"), "wb") as fd:
             fd.write(audio_data)
 
         # convert data from ogg to wav using a subprocess
@@ -159,7 +159,7 @@ def get_sentence_audio():
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
 
-        with open(os.path.join(example_audio_pathname, f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(env["EXAMPLE_AUDIO_DIR"], f"sent{ind}.mp3"), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
