@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import json, subprocess, os, time
+import json, subprocess, os, time, signal
 from flask import Flask, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -53,9 +53,14 @@ with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
         sent_list.append(line)
 
 
+
 ###############################
 #  Helper Functions
 ###############################
+
+def recording_cleanup_handler(sig, frame):
+    for file in os.scandir(env["RECORDING_DIR"]):
+        os.remove(file)
 
 def compare_results(result_text):
     #
@@ -168,4 +173,5 @@ def get_sentence_audio():
 ##############################
 # Start App
 ##############################
+signal.signal(signal.SIGINT, recording_cleanup_handler)
 app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))
