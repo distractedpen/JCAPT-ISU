@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import json, subprocess, os, datetime
+import json, subprocess, os, time
 from flask import Flask, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -111,7 +111,7 @@ def test():
     if request.method == "POST":
 
         audio_data = request.data
-        file_name = datetime.datetime.now() + str(file_name_padding)
+        file_name = time.time() + str(file_name_padding)
         file_name_padding += 1
 
         with open(os.path.join(env["AUDIO_DIR"], file_name+".ogg"), "wb") as fd:
