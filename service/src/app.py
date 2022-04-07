@@ -1,10 +1,11 @@
 ###############################
 # Imports
 ###############################
-import json, subprocess, os
-from flask import Flask, request, url_for, make_response
+import sys, json, subprocess, os, time, signal
+from flask import Flask, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
+from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
 
 
 ###############################
@@ -13,20 +14,23 @@ from srparser import WavParser
 os.chdir("../..")
 base_path = os.getcwd()
 list_pathname = os.path.join(os.getcwd(), "service/text")
-audio_pathname = os.path.join(os.getcwd(), "service/audio")
+recording_pathname = os.path.join(os.getcwd(), "service/audio/recordings")
+example_audio_pathname = os.path.join(os.getcwd(), "service/audio/examples")
 log_pathname = os.path.join(os.getcwd(), "service/logs")
 model_pathname = os.path.join(os.getcwd(), "service/model")
+ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
 
 env = {
     "LIST_DIR": list_pathname,
-    "AUDIO_DIR": audio_pathname,
+    "RECORDING_DIR": recording_pathname,
+    "EXAMPLE_AUDIO_DIR": example_audio_pathname,
     "LOG_DIR": log_pathname,
     "MODEL_DIR": model_pathname,
+    "SSL_DIR": ssl_pathname,
     "DEBUG": False
 }
 
 print(env)
-
 
 
 ################################
@@ -41,6 +45,7 @@ wav_parser = WavParser(env["MODEL_DIR"])
 # set up sentence list
 current_sentence = 0
 sent_list = []
+file_name_padding = 0
 with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
     for line in fd:
         line = line.strip("\n")
@@ -48,121 +53,16 @@ with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
         sent_list.append(line)
 
 
+
 ###############################
 #  Helper Functions
 ###############################
 
-MISMATCH_SCORE = -1
-INDEL_SCORE = -1
-MATCH_SCORE = 1
-
-
-def print_dp_table(table, result, correct, R, C):
-
-    for i in range(C+1):
-        if i == 0:
-            print('　'*7, end=' ')
-        else:
-            print(f"{correct[i-1]:3s}", end='　')
-    print()
-
-    for j in range(R+1):
-        for i in range(C+1):
-            if j == 0:
-                if i == 0:
-                    print(' '*4, end='　')
-                print(f"{table[j][i]:4d}", end='　')
-            elif i == 0 and j <= len(result):
-                print(f"{result[j-1]:3s}", end='　')
-                print(f"{table[j][i]:4d}", end='　')
-            else:
-                print(f"{table[j][i]:4d}", end='　')
-        print()
-
-
-def print_align_table(table, result, correct, R, C):
-
-    for i in range(C+1):
-        if i == 0:
-            print('　'*5, end=' ')
-        else:
-            print(f"{correct[i-1]:3s}", end='　')
-    print()
-
-    for j in range(R+1):
-        for i in range(C+1):
-            if j == 0:
-                if i == 0:
-                    print(' '*4, end='　')
-                print(f"{table[j][i]:4s}", end='　')
-            elif i == 0 and j <= len(result):
-                print(f"{result[j-1]:3s}", end='　')
-                print(f"{table[j][i]:4s}", end='　')
-            else:
-                print(f"{table[j][i]:4s}", end='　')
-        print()
-
-def print_str_align(str_alignments):
-    print(str_alignments['correct'])
-    for i in range(len(str_alignments['correct'])):
-        if str_alignments['correct'] == str_alignments['result']:
-            print("｜", end='')
-        else:
-            print("　", end='')
-    print()
-    print(str_alignments['result'])
-
-
-def make_dp_table(result, correct, R, C):
-
-    value_table = [[0]*(C+1) for _ in range(R+1)]
-    align_table = [[' ']*(C+1) for _ in range(R+1)]
-    
-    for j in range(C+1):
-        value_table[0][j] = -j
-    for i in range(R+1):
-        value_table[i][0] = -i
-
-    for i in range(1, R+1):  # rows
-        for j in range(1, C+1): # columns
-            if correct[j-1] == result[i-1]: # correct
-                value_table[i][j] = value_table[i-1][j-1] + MATCH_SCORE
-                align_table[i][j] = '\\'
-            elif value_table[i][j-1] > value_table[i][j]: # indel from top
-                value_table[i][j] = value_table[i][j-1] + INDEL_SCORE
-                align_table[i][j] = '|'
-            else: # table[i-1][j-1] > table[i][j-1]: # mismatch
-                value_table[i][j] = value_table[i-1][j-1] + MISMATCH_SCORE
-                align_table[i][j] = '\\'
-    return {'value': value_table, 'alignment': align_table}
-
-
-def determine_alignment(table, result, correct, i, j):
-
-    res_align = ''
-    cor_align = ''
-    align_str = ''
-
-    while i > 0 and j > 0:
-        if i > 0 and j > 0 and result[i-1] == correct[j-1]:
-            res_align = result[i-1] + res_align
-            cor_align = correct[j-1] + cor_align
-            align_str = "+" + align_str
-            i -= 1
-            j -= 1
-        elif i > 0 and j > 0 and table[i][j] == table[i-1][j-1] + MISMATCH_SCORE:
-            res_align = result[i-1] + res_align
-            cor_align = correct[j-1] + cor_align
-            align_str = "-" + align_str
-            i -= 1
-            j -= 1
-        else:
-            res_align = '＿' + res_align
-            cor_align = correct[j-1] + cor_align
-            align_str = "-" + align_str
-            j -= 1
-
-    return {"result": list(res_align), "correct": list(cor_align), "align_str": list(align_str)}
+def recording_cleanup_handler(sig, frame):
+    print("Cleaning Recordings directory...")
+    for file in os.scandir(env["RECORDING_DIR"]):
+        os.remove(file)
+    sys.exit(0)
 
 def compare_results(result_text):
     #
@@ -202,7 +102,7 @@ def compare_results(result_text):
 @app.route("/")
 @cross_origin()
 def index():
-    return url_for("status")
+    return render_template("index.html")
 
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
@@ -212,42 +112,37 @@ def status():
     return {"status": "online", "method": "GET"}
 
 
-@app.route("/results", methods=["POST", "GET"])
+@app.route("/results", methods=["POST"])
 @cross_origin()
 def test():
+    global file_name_padding
 
     if request.method == "POST":
 
         audio_data = request.data
+        file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
+        file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
 
-        with open(os.path.join(env["AUDIO_DIR"], "audio_file.ogg"), "wb") as fd:
+        with open(os.path.join(env["RECORDING_DIR"], file_name+".ogg"), "wb") as fd:
             fd.write(audio_data)
 
         # convert data from ogg to wav using a subprocess
         with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
             subprocess.run(
                 ["ffmpeg",
-                 "-i", os.path.join(env["AUDIO_DIR"], "audio_file.ogg"),
+                 "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
                  "-ar", "48000", "-ac", "1",
-                 os.path.join(audio_pathname, "audio_file.wav")],
+                 os.path.join(recording_pathname, file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
 
-        result = wav_parser.analyze(os.path.join(env["AUDIO_DIR"], "audio_file.wav"))
+        result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
-        print(result)
         str_alignment = compare_results(result["text"])
 
         if result:
-            print(audio_pathname)
-            os.remove(os.path.join(audio_pathname, "audio_file.ogg"))
-            os.remove(os.path.join(audio_pathname, "audio_file.wav"))
-            return {
-                "page": "test",
-                "status": "POST success",
-                "result": str_alignment
-                }
+            return { "status": "success", "result": str_alignment}
+        return {"status": "failure", "result": ""}
 
-    return {"page": "test", "status": "online", "result": "Error"}
 
 @app.route("/getText", methods=["POST"])
 @cross_origin()
@@ -256,13 +151,11 @@ def get_sentence_list():
 
     if request.method == "POST":
         data = json.loads(request.data)
-        print(data)
         ind = data["sent_index"]
         current_sentence = ind
         if ind == len(sent_list)-1:
             return {"page": "list", "sentence": sent_list[ind], "endOfList": True}
         return {"page": "list", "sentence": sent_list[ind], "endOfList": False}
-    return {"page": "list", "status": "error"}
 
 
 @app.route("/getAudio", methods=["POST"])
@@ -273,15 +166,14 @@ def get_sentence_audio():
         data = json.loads(request.data)
         ind = data["audiofileIndex"]
 
-        with open(os.path.join(audio_pathname, "test", f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(env["EXAMPLE_AUDIO_DIR"], f"sent{ind}.mp3"), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
-
-    return {"status": "getAudio is working."}
 
 
 ##############################
 # Start App
 ##############################
-app.run("0.0.0.0", port=8000)
+signal.signal(signal.SIGINT, recording_cleanup_handler)
+app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))
