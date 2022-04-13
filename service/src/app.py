@@ -2,7 +2,7 @@
 # Imports
 ###############################
 import sys, json, subprocess, os, time, signal
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
@@ -99,10 +99,6 @@ def compare_results(result_text):
 # App Routes (End Points)
 ##############################
 
-@app.route("/")
-@cross_origin()
-def index():
-    return render_template("index.html")
 
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
@@ -142,6 +138,11 @@ def test():
         if result:
             return { "status": "success", "result": str_alignment}
         return {"status": "failure", "result": ""}
+
+@app.route("/getDrillSets", methods=["GET", "POST"])
+@cross_origin
+def get_drill_sets():
+    pass
 
 
 @app.route("/getText", methods=["POST"])
