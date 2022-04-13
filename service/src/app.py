@@ -138,6 +138,14 @@ def get_drill_sets():
     drill_sets = drill_data_handler.get_drill_sets()
     return {"drill_sets": drill_sets}
 
+@app.route("/getDrillSet", methods=["POST"])
+@cross_origin()
+def get_drill_set():
+    req_data = json.loads(request.data)
+    drill_set_id = req_data["drill_set_id"]
+    drill_set_data = drill_data_handler.get_drill_set(drill_set_id) 
+    return {"drillSet": drill_set_data}
+
 
 @app.route("/getText", methods=["POST"])
 @cross_origin()
@@ -159,9 +167,10 @@ def get_sentence_audio():
 
     if request.method == "POST":
         data = json.loads(request.data)
-        ind = data["audiofileIndex"]
+        drill_set_id = data["drillSetId"]
+        file_name = data["fileName"]
 
-        with open(os.path.join(env["AUDIO_DIR"]+"/dev_test", f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(env["AUDIO_DIR"], drill_set_id, file_name), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
