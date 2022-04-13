@@ -133,9 +133,10 @@ def test():
         return {"status": "failure", "result": ""}
 
 @app.route("/getDrillSets", methods=["GET", "POST"])
-@cross_origin
+@cross_origin()
 def get_drill_sets():
-    pass
+    drill_sets = drill_data_handler.get_drill_sets()
+    return {"drill_sets": drill_sets}
 
 
 @app.route("/getText", methods=["POST"])
