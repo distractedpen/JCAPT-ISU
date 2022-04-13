@@ -43,9 +43,6 @@ wav_parser = WavParser(env["MODEL_DIR"])
 
 file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
-sent_list = drill_data_handler.get_drill_set("dev_test")["sentences"]
-print(sent_list)
-current_sentence = 0
 
 ###############################
 #  Helper Functions
@@ -108,6 +105,8 @@ def test():
 
     if request.method == "POST":
 
+        print(request.form)
+
         audio_data = request.data
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
@@ -145,20 +144,6 @@ def get_drill_set():
     drill_set_id = req_data["drill_set_id"]
     drill_set_data = drill_data_handler.get_drill_set(drill_set_id) 
     return {"drillSet": drill_set_data}
-
-
-@app.route("/getText", methods=["POST"])
-@cross_origin()
-def get_sentence_list():
-    global current_sentence
-
-    if request.method == "POST":
-        data = json.loads(request.data)
-        ind = data["sent_index"]
-        current_sentence = ind
-        if ind == len(sent_list)-1:
-            return {"page": "list", "sentence": sent_list[ind], "endOfList": True}
-        return {"page": "list", "sentence": sent_list[ind], "endOfList": False}
 
 
 @app.route("/getAudio", methods=["POST"])

@@ -15,15 +15,15 @@ const listenBtn = document.querySelector('.listen-btn');
 const drillSetId = localStorage.getItem("drill_set");
 console.log(drillSetId);
 // Get object of {sentences, audio_file_names} from service
-let drillSet = setDrillSet(drillSetId);
+let drillSet;
+fetchDrillSet(drillSetId);
 
 let current_sentence = 0;
-// Fetch audio for first sentence.
 
 /**********************************
  * API Calls
  **********************************/
-function fetchDrillSet() {
+function fetchDrillSet(drillSetId) {
 	const payload = {
 		method: "POST",
 		mode: "cors",
@@ -39,12 +39,13 @@ function fetchDrillSet() {
 	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
 	.then( (response) => response.json())
 	.then( (json) => {
-		drillSet = JSON.parse(json.drillSet);
+		drillSet = json.drillSet;
+		console.log(drillSet);
 		fetchAudio(drillSetId, drillSet.audio[current_sentence]);
 		senText.innerHTML = drillSet.sentences[current_sentence];
 	 }) 
 	.catch( (err) => { 
-		return err; 
+		console.log(err); 
 	});	
 }
 
@@ -183,16 +184,20 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 				const audioURL = window.URL.createObjectURL(blob);
 				audio.src = audioURL;
 
-				const audioFile = blobToFile(blob, `${clipName}.ogg`);
+				const audioFile = blobToFile(blob, `${clipName}.ogg`);				
 
-				const payload = {
+
+				const formData = new FormData();
+				formData.append("id", drillSetId);
+				formData.append("index", current_sentence);
+				formData.append("audio", audioFile);
+
+
+				payload = {
 					method: "POST",
 					mode: "cors",
 					cache: "no-cache",
-					headers: {
-						"Content-Type": 'audio/ogg; codecs="opus"'
-					},
-					body: audioFile
+					body: formData
 				};
 
 				const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`, payload)
