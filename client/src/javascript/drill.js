@@ -1,11 +1,4 @@
 /**********************************
- * Thoughts:
- * 	- Choose a Frontend Framework for page?
- * 
- **********************************/
-
-
-/**********************************
  * Global Variables
  **********************************/
 const record = document.querySelector('.record');	
@@ -17,10 +10,10 @@ const previous = document.querySelector('.previous');
 const next = document.querySelector('.next');
 const listenContainer = document.querySelector('.listen-container');
 const listenBtn = document.querySelector('.listen-btn');
-const drill_set = localStorage.getItem("drill_set");
-let current_sentence = 0;
 
-console.log(drill_set);
+const drill_set_id = localStorage.getItem("drill_set");
+
+let current_sentence = 0;
 
 const env = {"SERVICE_HOST": "https://172.19.124.246", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
 

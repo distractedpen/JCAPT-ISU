@@ -1,3 +1,6 @@
+/**********************************
+ * Global Variables
+ **********************************/
 const env = {"SERVICE_HOST": "https://172.19.124.246", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
 const selectEl = document.getElementById("drill-select");
 
