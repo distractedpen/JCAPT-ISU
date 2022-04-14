@@ -23,6 +23,9 @@ class DrillSetHandler():
     def get_drill_set(self, id):
         return self.drill_data[id]
 
+    def get_sentence(self, id, index):
+        return self.drill_data[id]["sentences"][index]
+
     def add_drill_set(self, new_drill_set):
         self.drill_data[uuid4()] = new_drill_set
         with open(self.pathname, 'w', encoding="UTF-8") as f_out:

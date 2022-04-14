@@ -54,7 +54,7 @@ def recording_cleanup_handler(sig, frame):
         os.remove(file)
     sys.exit(0)
 
-def compare_results(result_text):
+def compare_results(result, correct):
     #
     # Dynamic Programming:
     #   Align Correct Text to Vosk Output
@@ -64,9 +64,8 @@ def compare_results(result_text):
 
 
     # remove spaces from resultText
-    result = result_text.replace(" ", "")
-    correct = sent_list[current_sentence]
-
+    result = result.replace(" ", "")
+    
     R = len(result)
     C = len(correct)
 
@@ -105,14 +104,14 @@ def test():
 
     if request.method == "POST":
 
-        print(request.form)
+        id = request.form["id"]
+        index = int(request.form["index"])
 
-        audio_data = request.data
+        audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
+        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".ogg"))
 
-        with open(os.path.join(env["RECORDING_DIR"], file_name+".ogg"), "wb") as fd:
-            fd.write(audio_data)
 
         # convert data from ogg to wav using a subprocess
         with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
@@ -123,9 +122,16 @@ def test():
                  os.path.join(env["RECORDING_DIR"], file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
 
+
+
         result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
-        str_alignment = compare_results(result["text"])
+
+        correct = drill_data_handler.get_sentence(id, index)
+
+        str_alignment = compare_results(result["text"], correct)
+
+        
 
         if result:
             return { "status": "success", "result": str_alignment}

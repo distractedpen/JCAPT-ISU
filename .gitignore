@@ -3,4 +3,5 @@ jcapt.sublime-workspace
 service/model
 __pycache__
 service/logs/*
+service/drills/audio/recordings/*
 client/src/node_modules/

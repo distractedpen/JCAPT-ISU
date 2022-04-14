@@ -1,7 +1,7 @@
 /**********************************
  * Global Variables
  **********************************/
-const env = {"SERVICE_HOST": "https://172.19.124.246", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
+const env = {"SERVICE_HOST": "https://172.19.120.203", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
 const selectEl = document.getElementById("drill-select");
 
 /********************
@@ -15,7 +15,6 @@ function fetchDrillSets() {
         cache: "no-cache",
         headers: {
             "Content-Type": 'application/json',
-            "Origin": `${env["CLIENT_HOST"]}`
         }
     };
     fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSets`, payload)

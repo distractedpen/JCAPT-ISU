@@ -1,7 +1,7 @@
 /**********************************
  * Global Variables
  **********************************/
-const env = {"SERVICE_HOST": "https://172.19.124.246", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
+const env = {"SERVICE_HOST": "https://172.19.120.203", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
 const record = document.querySelector('.record');	
 const stop = document.querySelector('.stop');
 const soundClip = document.querySelector('.sound-clip');
@@ -13,7 +13,6 @@ const listenContainer = document.querySelector('.listen-container');
 const listenBtn = document.querySelector('.listen-btn');
 
 const drillSetId = localStorage.getItem("drill_set");
-console.log(drillSetId);
 // Get object of {sentences, audio_file_names} from service
 let drillSet;
 fetchDrillSet(drillSetId);
@@ -30,7 +29,6 @@ function fetchDrillSet(drillSetId) {
 		cache: "no-cache",
 		headers: {
 			"Content-Type": 'application/json',
-			"Origin": `${env["CLIENT_HOST"]}`
 		},
 		body: JSON.stringify({
 			drill_set_id: drillSetId
@@ -40,7 +38,6 @@ function fetchDrillSet(drillSetId) {
 	.then( (response) => response.json())
 	.then( (json) => {
 		drillSet = json.drillSet;
-		console.log(drillSet);
 		fetchAudio(drillSetId, drillSet.audio[current_sentence]);
 		senText.innerHTML = drillSet.sentences[current_sentence];
 	 }) 
@@ -192,7 +189,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 				formData.append("index", current_sentence);
 				formData.append("audio", audioFile);
 
-
 				payload = {
 					method: "POST",
 					mode: "cors",
@@ -204,7 +200,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 					.then( (response) => { return response.json(); } )	
 					.then( (data) => { return data.result } )
 					.catch( (err) => { return console.error(err); } );
-				console.log(response);
 
 				const correct_aligned = response.correct;
 				const result_aligned = response.result;
