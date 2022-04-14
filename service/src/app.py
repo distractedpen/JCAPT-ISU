@@ -2,9 +2,10 @@
 # Imports
 ###############################
 import sys, json, subprocess, os, time, signal
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
+from DrillSetHandler import DrillSetHandler
 from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
 
 
@@ -13,17 +14,15 @@ from NWAlignment import print_dp_table, print_align_table, print_str_align, make
 ###############################
 os.chdir("../..")
 base_path = os.getcwd()
-list_pathname = os.path.join(os.getcwd(), "service/text")
-recording_pathname = os.path.join(os.getcwd(), "service/audio/recordings")
-example_audio_pathname = os.path.join(os.getcwd(), "service/audio/examples")
+drill_pathname = os.path.join(os.getcwd(), "service/drills")
 log_pathname = os.path.join(os.getcwd(), "service/logs")
 model_pathname = os.path.join(os.getcwd(), "service/model")
 ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
 
 env = {
-    "LIST_DIR": list_pathname,
-    "RECORDING_DIR": recording_pathname,
-    "EXAMPLE_AUDIO_DIR": example_audio_pathname,
+    "DRILL_DIR": drill_pathname,
+    "AUDIO_DIR": os.path.join(drill_pathname, "audio"),
+    "RECORDING_DIR": os.path.join(drill_pathname, "audio/recordings"),
     "LOG_DIR": log_pathname,
     "MODEL_DIR": model_pathname,
     "SSL_DIR": ssl_pathname,
@@ -34,7 +33,7 @@ print(env)
 
 
 ################################
-# Flask & Vosk Init
+# Flask, Vosk, Drill Data Init
 ################################
 
 app = Flask(__name__)
@@ -42,17 +41,8 @@ cors = CORS(app, resources=r'/.*',
     origins="*", methods="*", allow_headers="*", headers='Content-Type')
 wav_parser = WavParser(env["MODEL_DIR"])
 
-# set up sentence list
-current_sentence = 0
-sent_list = []
 file_name_padding = 0
-with open(os.path.join(env["LIST_DIR"], "list.txt"), "r") as fd:
-    for line in fd:
-        line = line.strip("\n")
-        line = line.replace("。", "")
-        sent_list.append(line)
-
-
+drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
 
 ###############################
 #  Helper Functions
@@ -64,7 +54,7 @@ def recording_cleanup_handler(sig, frame):
         os.remove(file)
     sys.exit(0)
 
-def compare_results(result_text):
+def compare_results(result, correct):
     #
     # Dynamic Programming:
     #   Align Correct Text to Vosk Output
@@ -74,9 +64,8 @@ def compare_results(result_text):
 
 
     # remove spaces from resultText
-    result = result_text.replace(" ", "")
-    correct = sent_list[current_sentence]
-
+    result = result.replace(" ", "")
+    
     R = len(result)
     C = len(correct)
 
@@ -99,10 +88,6 @@ def compare_results(result_text):
 # App Routes (End Points)
 ##############################
 
-@app.route("/")
-@cross_origin()
-def index():
-    return render_template("index.html")
 
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
@@ -119,12 +104,14 @@ def test():
 
     if request.method == "POST":
 
-        audio_data = request.data
+        id = request.form["id"]
+        index = int(request.form["index"])
+
+        audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
+        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".ogg"))
 
-        with open(os.path.join(env["RECORDING_DIR"], file_name+".ogg"), "wb") as fd:
-            fd.write(audio_data)
 
         # convert data from ogg to wav using a subprocess
         with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
@@ -132,30 +119,37 @@ def test():
                 ["ffmpeg",
                  "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
                  "-ar", "48000", "-ac", "1",
-                 os.path.join(recording_pathname, file_name+".wav")],
+                 os.path.join(env["RECORDING_DIR"], file_name+".wav")],
                  stdout=subprocess.PIPE, stderr=fd)
+
+
 
         result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
-        str_alignment = compare_results(result["text"])
+
+        correct = drill_data_handler.get_sentence(id, index)
+
+        str_alignment = compare_results(result["text"], correct)
+
+        
 
         if result:
             return { "status": "success", "result": str_alignment}
         return {"status": "failure", "result": ""}
 
-
-@app.route("/getText", methods=["POST"])
+@app.route("/getDrillSets", methods=["GET", "POST"])
 @cross_origin()
-def get_sentence_list():
-    global current_sentence
+def get_drill_sets():
+    drill_sets = drill_data_handler.get_drill_sets()
+    return {"drill_sets": drill_sets}
 
-    if request.method == "POST":
-        data = json.loads(request.data)
-        ind = data["sent_index"]
-        current_sentence = ind
-        if ind == len(sent_list)-1:
-            return {"page": "list", "sentence": sent_list[ind], "endOfList": True}
-        return {"page": "list", "sentence": sent_list[ind], "endOfList": False}
+@app.route("/getDrillSet", methods=["POST"])
+@cross_origin()
+def get_drill_set():
+    req_data = json.loads(request.data)
+    drill_set_id = req_data["drill_set_id"]
+    drill_set_data = drill_data_handler.get_drill_set(drill_set_id) 
+    return {"drillSet": drill_set_data}
 
 
 @app.route("/getAudio", methods=["POST"])
@@ -164,9 +158,10 @@ def get_sentence_audio():
 
     if request.method == "POST":
         data = json.loads(request.data)
-        ind = data["audiofileIndex"]
+        drill_set_id = data["drillSetId"]
+        file_name = data["fileName"]
 
-        with open(os.path.join(env["EXAMPLE_AUDIO_DIR"], f"sent{ind}.mp3"), 'rb') as fd:
+        with open(os.path.join(env["AUDIO_DIR"], drill_set_id, file_name), 'rb') as fd:
             audio_data = fd.read()
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))

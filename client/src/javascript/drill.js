@@ -1,13 +1,7 @@
 /**********************************
- * Thoughts:
- * 	- Choose a Frontend Framework for page?
- * 
- **********************************/
-
-
-/**********************************
  * Global Variables
  **********************************/
+const env = {"SERVICE_HOST": "https://172.19.120.203", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
 const record = document.querySelector('.record');	
 const stop = document.querySelector('.stop');
 const soundClip = document.querySelector('.sound-clip');
@@ -17,50 +11,42 @@ const previous = document.querySelector('.previous');
 const next = document.querySelector('.next');
 const listenContainer = document.querySelector('.listen-container');
 const listenBtn = document.querySelector('.listen-btn');
+
+const drillSetId = localStorage.getItem("drill_set");
+// Get object of {sentences, audio_file_names} from service
+let drillSet;
+fetchDrillSet(drillSetId);
+
 let current_sentence = 0;
-
-const env = {"SERVICE_HOST": "https://139.102.12.140", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
-
 
 /**********************************
  * API Calls
  **********************************/
-function fetchText(index) {
-
+function fetchDrillSet(drillSetId) {
 	const payload = {
 		method: "POST",
 		mode: "cors",
 		cache: "no-cache",
 		headers: {
 			"Content-Type": 'application/json',
-			"Origin": `${env["CLIENT_HOST"]}`
 		},
 		body: JSON.stringify({
-			sent_index: current_sentence
+			drill_set_id: drillSetId
 		})
 	};
-	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getText`, payload)
-	.then( (response) => response.json() )
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
+	.then( (response) => response.json())
 	.then( (json) => {
-		console.log(json.sentence, json.endOfList)
-	    senText.innerHTML = json.sentence;
-
-	    if (json.endOfList)
-		   	next.setAttribute('disabled', '');
-		else
-			next.removeAttribute('disabled');
-
-		if (index === 0)
-			previous.setAttribute('disabled', '');
-		else
-			previous.removeAttribute('disabled');
+		drillSet = json.drillSet;
+		fetchAudio(drillSetId, drillSet.audio[current_sentence]);
+		senText.innerHTML = drillSet.sentences[current_sentence];
 	 }) 
 	.catch( (err) => { 
-		return err; 
+		console.log(err); 
 	});	
 }
 
-function fetchTextAudio(index) {
+function fetchAudio(drillSetId, fileName) {
 	const payload = {
 		method: "POST",
 		mode: "cors",
@@ -69,7 +55,8 @@ function fetchTextAudio(index) {
 			"Content-Type": 'application/json'
 		},
 		body: JSON.stringify({
-			audiofileIndex: index,
+			drillSetId: drillSetId,
+			fileName: fileName,
 		})
 	};
 	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
@@ -91,8 +78,8 @@ function fetchTextAudio(index) {
 	    }
 	})
 }
-fetchText(current_sentence);
-fetchTextAudio(current_sentence);
+
+
 
 
 /********************************
@@ -104,22 +91,38 @@ function blobToFile(blob, filename) {
 	return blob;
 }
 
+async function setDrillSet(drillSetId) {
+	const drillSet = await fetchDrillSet(drillSetId);
+
+	return drillSet;
+}
 
 /********************************
  * Callbacks for Sentence Buttons
  ********************************/
 previous.onclick = function() {
 	current_sentence--;
-	fetchText(current_sentence);
-	fetchTextAudio(current_sentence);
+
+	if (current_sentence === 0)
+		previous.setAttribute("disabled", "");
+	if (current_sentence < drillSet.sentences.length - 1)
+		next.removeAttribute("disabled");
+
+	senText.innerHTML = drillSet.sentences[current_sentence];
+	fetchAudio(drillSetId, drillSet.audio[current_sentence]);
 }
 
 next.onclick = function() {
 	current_sentence++;
-	fetchText(current_sentence);
-	fetchTextAudio(current_sentence);
-}
+	
+	if (current_sentence > 0)
+		previous.removeAttribute("disabled");
+	if (current_sentence === drillSet.sentences.length - 1)
+		next.setAttribute("disabled", "");
 
+	senText.innerHTML = drillSet.sentences[current_sentence];
+	fetchAudio(drillSetId, drillSet.audio[current_sentence]);
+}
 
 /********************************
  * Setup and Callbacks and API Calls
@@ -178,23 +181,25 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 				const audioURL = window.URL.createObjectURL(blob);
 				audio.src = audioURL;
 
-				const audioFile = blobToFile(blob, `${clipName}.ogg`);
+				const audioFile = blobToFile(blob, `${clipName}.ogg`);				
 
-				const payload = {
+
+				const formData = new FormData();
+				formData.append("id", drillSetId);
+				formData.append("index", current_sentence);
+				formData.append("audio", audioFile);
+
+				payload = {
 					method: "POST",
 					mode: "cors",
 					cache: "no-cache",
-					headers: {
-						"Content-Type": 'audio/ogg; codecs="opus"'
-					},
-					body: audioFile
+					body: formData
 				};
 
 				const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`, payload)
 					.then( (response) => { return response.json(); } )	
 					.then( (data) => { return data.result } )
 					.catch( (err) => { return console.error(err); } );
-				console.log(response);
 
 				const correct_aligned = response.correct;
 				const result_aligned = response.result;
