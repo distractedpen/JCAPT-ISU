@@ -21,6 +21,12 @@ form {
 	text-align: left;
 }
 
+input:invalid,
+input:invalid:required{
+	border: 2px solid red;
+}
+
+
 .xbtn {
 	width: 20px;
 	height: 20px;

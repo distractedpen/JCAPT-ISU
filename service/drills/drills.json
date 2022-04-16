@@ -1,28 +1,22 @@
 {
-	"dev_test":{
-		"name": "Development Test Drill Set",
-		"sentences": [
-			"私は大学生です",
-			"これは何ですか",
-			"それはペンです",
-			"今は何時ですか",
-			"昨日はインディーアナポリスで買い物に行きました"
-		],
-		"audio": [
-			"sent0.mp3",
-			"sent1.mp3",
-			"sent2.mp3",
-			"sent3.mp3",
-			"sent4.mp3"
-		]
-	},
-	"dev_test_2": {
-		"name": "Dev Set 2",
-		"sentences": [
-			
-		],
-		"audio": [
-			
-		]
-	}
+    "dev_test":
+    {
+        "name": "Development Test Drill Set",
+        "sentences":
+        [
+            "私は大学生です",
+            "これは何ですか",
+            "それはペンです",
+            "今は何時ですか",
+            "昨日はインディーアナポリスで買い物に行きました"
+        ],
+        "audio":
+        [
+            "sent0.mp3",
+            "sent1.mp3",
+            "sent2.mp3",
+            "sent3.mp3",
+            "sent4.mp3"
+        ]
+    }
 }

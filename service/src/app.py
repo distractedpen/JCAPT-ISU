@@ -2,6 +2,7 @@
 # Imports
 ###############################
 import sys, json, subprocess, os, time, signal
+import uuid
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -166,9 +167,42 @@ def get_sentence_audio():
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
 
+@app.route("/newDrillSet", methods=["POST"])
+@cross_origin()
+def new_drill_set():
+    print("Creating new uuid4")
+    id = str(uuid.uuid4())
+    print("New uuid4", id)
+
+    new_audio_dir = os.path.join(env["AUDIO_DIR"], id)
+    print("Save audio data in", new_audio_dir)
+
+    print("Getting data from request")
+    num_sentences = int(request.form["num_sentences"])
+    name = request.form["name"]
+    print("geting sentences and audio filenames")
+    sentences = [ request.form["sentence"+str(i)] for i in range(num_sentences)]
+    audio = [ key + ".wav" for key in request.files.keys()]
+    print(audio)
+    print("got sentence an audio filenames")
+    # Create new Drill Set
+    new_drill_set = {"name": name, "sentences": sentences, "audio": audio}
+    print("Adding data to drill_set")
+    drill_data_handler.add_drill_set(id, new_drill_set)
+    print("Added data to drills.json")
+    # Save Audio to Correct directory
+    
+    print("Creating audio dir", new_audio_dir)
+    os.mkdir(new_audio_dir)
+    print("Saving audio files in", new_audio_dir)
+    for filename in audio:
+        audio_data = request.files[filename[:-4]]
+        audio_data.save(os.path.join(new_audio_dir, filename))
+    print("Saved audio in ", new_audio_dir)
+    return {"status": "success"}
 
 ##############################
 # Start App
 ##############################
 signal.signal(signal.SIGINT, recording_cleanup_handler)
-app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))
+# app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))

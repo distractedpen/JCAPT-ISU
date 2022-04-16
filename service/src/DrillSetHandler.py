@@ -4,7 +4,6 @@
 #
 #
 import json
-from uuid import uuid4
 
 
 class DrillSetHandler():
@@ -26,7 +25,7 @@ class DrillSetHandler():
     def get_sentence(self, id, index):
         return self.drill_data[id]["sentences"][index]
 
-    def add_drill_set(self, new_drill_set):
-        self.drill_data[uuid4()] = new_drill_set
+    def add_drill_set(self, id, new_drill_set):
+        self.drill_data[id] = new_drill_set
         with open(self.pathname, 'w', encoding="UTF-8") as f_out:
             f_out.write(json.dumps(self.drill_data))

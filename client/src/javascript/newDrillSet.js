@@ -1,4 +1,18 @@
+const env = {"SERVICE_HOST": "https://172.19.119.223", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
+const containerDiv = document.querySelector(".container");
 const formEl = document.getElementById("drill-form");
+const nameInput = document.getElementById("nameInput");
+
+nameInput.addEventListener("input", () => {
+	nameInput.setCustomValidity('');
+	nameInput.checkValidity();
+})
+nameInput.addEventListener("invalid", () => {
+	if (nameInput.value === "") {
+		nameInput.setCustomValidity("Must enter a name for this drill set.");
+	}
+})
+
 let nextSentenceCount = 0;
 
 let sentences = [];
@@ -27,6 +41,7 @@ function addSentence() {
 	const sentenceInput = document.createElement("input");
 	sentenceInput.name = labelName;
 	sentenceInput.setAttribute("type", "text");
+	sentenceInput.setAttribute("required", "");
 
 	sentenceLabel.appendChild(sentenceInput);
 
@@ -51,28 +66,79 @@ function addSentence() {
 }
 addSentence();
 
+function validateForm() {
 
-function submitForm() {
+	let valid = false;
+	
+	const nameInput = document.getElementById("nameInput");
+	if (nameInput.value === "")
+		valid = false;
+	if (valid) {
+		sentences.forEach( (value) => {
+			const sentEl = document.getElementsByName(oldLabelName);
+			if (sentEl.value === "") {
+				valid = false; 
+				return;
+			}
+		});
+	};
+
+	if (valid)
+		submitForm();
+}
+
+
+async function submitForm() {
 	// gather data stored in sentenceX audioX named tags
 
 	let formData = new FormData();
 	let newCounter = 0;
 
+	formData.append("num_sentences", sentences.length);
+	formData.append("name", nameInput.value);
 	sentences.forEach( (value) => {
 		const oldLabelName = "sentence" + value;
 		const oldAudioName = "audio" + value;
 
-		const sentEl = document.getElementByName(oldLabelName);
-		const audioEl = document.getElementByName(oldAudioName);
+		const sentEl = document.getElementsByName(oldLabelName);
+		const audioEl = document.getElementsByName(oldAudioName);
 
 		const newLabelName = "sentence" + newCounter;
 		const newAudioName = "audio" + newCounter;
 
-		formData.append(newLabelName, sentEl.value);
-		formData.append(newAudioName, audioEl.files[0], newAudioName+".wav");
+
+
+		formData.append(newLabelName, sentEl[0].value);
+		formData.append(newAudioName, audioEl[0].files[0], newAudioName+".wav");
 		newCounter++;
 	});
 
 	// Send formData to service for processing!!!
+	const payload = {
+		method: "POST",
+		mode: "cors",
+		cache: "no-cache",
+		body: formData
+	};
+
+	const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/newDrillSet`, payload)
+		.then( (response) => { return response.json(); } )	
+		.then( (data) => { return data } )
+		.catch( (err) => { return console.error(err); } );
+	console.log(response);
+
+	if (response.status === "success"){
+		nameInput.value = "";
+
+		const formTop = document.querySelector(".form-top");
+		while (formEl.lastChild !== formTop) {
+			formEl.removeChild(formEl.lastChild);
+		}
+		addSentence();
+	}
+
+	const statusText = document.createElement("p");
+	statusText.innerHTML = response.status === "success" ? "Drill Created Successfully." : response.error;
+	containerDiv.appendChild(statusText);
 
 }
