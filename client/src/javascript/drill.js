@@ -1,7 +1,7 @@
 /**********************************
  * Global Variables
  **********************************/
-const env = {"SERVICE_HOST": "https://172.19.119.223", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
+const env = {"SERVICE_HOST": "https://172.19.125.51", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"}
 const record = document.querySelector('.record');	
 const stop = document.querySelector('.stop');
 const soundClip = document.querySelector('.sound-clip');

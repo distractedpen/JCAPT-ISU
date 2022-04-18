@@ -1,4 +1,15 @@
-const env = {"SERVICE_HOST": "https://172.19.119.223", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
+/// Need to add audio object to each sentence for user to listen to
+
+
+const isNewDrillSet = localStorage.getItem("isNewDrillSet");
+let oldDrillSet;
+if (!isNewDrillSet) {
+	const drillSetId = localStorage.getItem("drillSetId");
+	oldDrillSet = fetchDrillSet();
+	// iterate through oldDrillSet.sentences and audio
+	// populate sentence + audio elements using this data.
+}
+const env = {"SERVICE_HOST": "https://172.19.125.51", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
 const containerDiv = document.querySelector(".container");
 const formEl = document.getElementById("drill-form");
 const nameInput = document.getElementById("nameInput");
@@ -6,12 +17,12 @@ const nameInput = document.getElementById("nameInput");
 nameInput.addEventListener("input", () => {
 	nameInput.setCustomValidity('');
 	nameInput.checkValidity();
-})
+});
 nameInput.addEventListener("invalid", () => {
 	if (nameInput.value === "") {
 		nameInput.setCustomValidity("Must enter a name for this drill set.");
 	}
-})
+});
 
 let nextSentenceCount = 0;
 
@@ -53,7 +64,13 @@ function addSentence() {
 	audioInput.setAttribute("type", "file");
 	audioInput.setAttribute("accept", ".wav");
 
+	// Create audio player after user uploaded an audio file.
+	// const audioObj = document.createElement("audio");
+	// audioObj.setAttribute("controls", "");
+	// audioObj.src = audioInput.files[0];
+
 	audioLabel.appendChild(audioInput);
+	// audioLabel.appendChild(audioObj);
 
 	newSentenceDiv.appendChild(deleteBtn);
 	newSentenceDiv.appendChild(sentenceLabel);
@@ -65,6 +82,63 @@ function addSentence() {
 
 }
 addSentence();
+
+
+// Populate sentences from oldDrillSet Data.
+function populateSentence(sentence, audioFileName) {
+	sentences.push(nextSentenceCount);
+	const newSentenceDiv = document.createElement("div");
+	newSentenceDiv.className = "new-sentence";
+
+	const sentNumber = nextSentenceCount;
+	const labelName = "sentence" + sentNumber;
+	const audioName = "audio" + sentNumber;
+
+
+	const deleteBtn = document.createElement("button");
+	deleteBtn.textContent = "X";
+	deleteBtn.className = "xbtn";
+	deleteBtn.onclick = function() {
+		sentences = sentences.filter((value) => value !== sentNumber);
+		formEl.removeChild(deleteBtn.parentNode);
+	}
+
+	const sentenceLabel = document.createElement("label");
+	sentenceLabel.innerHTML = "Sentence: "
+
+	const sentenceInput = document.createElement("input");
+	sentenceInput.name = labelName;
+	sentenceInput.setAttribute("type", "text");
+	sentenceInput.setAttribute("required", "");
+	// sentenceInput.value = sentence;
+
+	sentenceLabel.appendChild(sentenceInput);
+
+	const audioLabel = document.createElement("label");
+	audioLabel.innerHTML = "Audio: "
+
+	const audioInput = document.createElement("input");
+	audioInput.name = audioName;
+	audioInput.setAttribute("type", "file");
+	audioInput.setAttribute("accept", ".wav");
+	// audioInput.value == getAudio(audioFileName);
+	
+	// Create audio player after user uploaded an audio file.
+	// const audioObj = document.createElement("audio");
+	// audioObj.setAttribute("controls", "");
+	// audioObj.src = audioInput.files[0];
+
+	audioLabel.appendChild(audioInput);
+	// audioLabel.appendChild(audioObj);
+	
+	newSentenceDiv.appendChild(deleteBtn);
+	newSentenceDiv.appendChild(sentenceLabel);
+	newSentenceDiv.appendChild(audioLabel);
+
+	nextSentenceCount++;
+	formEl.appendChild(newSentenceDiv);
+	console.log(sentences);
+}
 
 function validateForm() {
 
@@ -141,4 +215,28 @@ async function submitForm() {
 	statusText.innerHTML = response.status === "success" ? "Drill Created Successfully." : response.error;
 	containerDiv.appendChild(statusText);
 
+}
+
+function fetchDrillSet(drillSetId) {
+	const payload = {
+		method: "POST",
+		mode: "cors",
+		cache: "no-cache",
+		headers: {
+			"Content-Type": 'application/json',
+		},
+		body: JSON.stringify({
+			drill_set_id: drillSetId
+		})
+	};
+	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
+	.then( (response) => response.json())
+	.then( (json) => {
+		drillSet = json.drillSet;
+		fetchAudio(drillSetId, drillSet.audio[current_sentence]);
+		senText.innerHTML = drillSet.sentences[current_sentence];
+	 }) 
+	.catch( (err) => { 
+		console.log(err); 
+	});	
 }

@@ -201,6 +201,30 @@ def new_drill_set():
     print("Saved audio in ", new_audio_dir)
     return {"status": "success"}
 
+
+@app.route("/deleteDrillSet", methods=["POST"])
+@cross_origin()
+def delete_drill_set():
+    
+    data = json.loads(request.data)
+    id = data["drillSetId"]
+
+    drill_data_handler.remove_drill_set(id)
+
+    return {"status": "success"}
+
+@app.route("/updateDrillSet", methods=["POST"])
+@cross_origin()
+def update_drill_set():
+    
+    data = json.loads(request.data)
+    id = data["drillSetId"]
+
+    drill_data_handler.update_drill_set(id, new_drill_set)
+
+    return {"status": "success"}
+
+
 ##############################
 # Start App
 ##############################
