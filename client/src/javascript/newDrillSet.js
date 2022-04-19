@@ -1,4 +1,4 @@
-const env = {"SERVICE_HOST": "https://139.102.14.205", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
+const env = {"SERVICE_HOST": "https://172.19.122.255", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
 const containerDiv = document.querySelector(".container");
 const formEl = document.getElementById("drill-form");
 const nameInput = document.getElementById("nameInput");
@@ -7,17 +7,24 @@ const isNewDrillSet = localStorage.getItem("isNewDrillSet");
 console.log(!isNewDrillSet);
 localStorage.removeItem("isNewDrillSet");
 
-let oldDrillSet;
-if (!isNewDrillSet) {
+async function renderDrillSet() {
 	const drillSetId = localStorage.getItem("drillSetId");
 	console.log("drillSetId " + drillSetId);
+	const oldDrillSet = await fetchDrillSet(drillSetId);
 	localStorage.removeItem("drillSetId");
-	oldDrillSet = fetchDrillSet(drillSetId);
 	console.log(oldDrillSet);
-	Object.values(oldDrillSet).map(({sentences, audioFileNames}, index) => {
-		populateSentence(sentences[index], audioFileNames[index]);
+	const sentences = oldDrillSet.sentences;
+	const audioFileNames = oldDrillSet.audio;
+	sentences.map((sentence, index) => {
+		populateSentence(drillSetId, sentence, audioFileNames[index]);
 	});
-}
+	nameInput.value = oldDrillSet.name;
+};
+
+if (!isNewDrillSet)
+	renderDrillSet();
+else
+	addSentence();
 
 
 nameInput.addEventListener("input", () => {
@@ -87,11 +94,10 @@ function addSentence() {
 	console.log(sentences);
 
 }
-addSentence();
 
 
 // Populate sentences from oldDrillSet Data.
-function populateSentence(sentence, audioFileName) {
+async function populateSentence(drillSetId, sentence, audioFileName) {
 	sentences.push(nextSentenceCount);
 	const newSentenceDiv = document.createElement("div");
 	newSentenceDiv.className = "new-sentence";
@@ -116,7 +122,7 @@ function populateSentence(sentence, audioFileName) {
 	sentenceInput.name = labelName;
 	sentenceInput.setAttribute("type", "text");
 	sentenceInput.setAttribute("required", "");
-	// sentenceInput.value = sentence;
+	sentenceInput.value = sentence;
 
 	sentenceLabel.appendChild(sentenceInput);
 
@@ -127,12 +133,14 @@ function populateSentence(sentence, audioFileName) {
 	audioInput.name = audioName;
 	audioInput.setAttribute("type", "file");
 	audioInput.setAttribute("accept", ".wav");
-	audioInput.value == getAudio(audioFileName);
+	audioInput.value == await fetchAudio(drillSetId, audioFileName);
 	
 	// Create audio player after user uploaded an audio file.
 	const audioObj = document.createElement("audio");
 	audioObj.setAttribute("controls", "");
-	audioObj.src = audioInput.files[0];
+	const blob = await fetchAudio(drillSetId, audioFileName);
+	audioObj.src = window.URL.createObjectURL(blob);
+				
 
 	audioLabel.appendChild(audioInput);
 	audioLabel.appendChild(audioObj);
@@ -235,18 +243,12 @@ async function fetchDrillSet(drillSetId) {
 			drill_set_id: drillSetId
 		})
 	};
-	const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
-	.then( (response) => response.json())
-	.then( (json) =>  json ) 
-	.catch( (err) => { 
-		console.log(err); 
-		return {};
-	});	
-
-	return response;
+	return await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
+		   .then( (response) => response.json())
+		   .then( (json) =>  { return json.drillSet; });
 }
 
-function fetchAudio(drillSetId, fileName) {
+async function fetchAudio(drillSetId, fileName) {
 	const payload = {
 		method: "POST",
 		mode: "cors",
@@ -259,9 +261,7 @@ function fetchAudio(drillSetId, fileName) {
 			fileName: fileName,
 		})
 	};
-	fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
+	return await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
 	.then( (response) => response.blob())
-	.then( (blob) => {
-	    return blob;
-	})
+	.then( (blob) => { return blob; })
 }
