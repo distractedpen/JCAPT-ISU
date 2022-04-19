@@ -3,16 +3,16 @@ const containerDiv = document.querySelector(".container");
 const formEl = document.getElementById("drill-form");
 const nameInput = document.getElementById("nameInput");
 
-const isNewDrillSet = localStorage.getItem("isNewDrillSet");
-console.log(!isNewDrillSet);
-localStorage.removeItem("isNewDrillSet");
+let nextSentenceCount = 0;
+let sentences = [];
+const isNewDrillSet = localStorage.getItem("isNewDrillSet") === "true" ? true : false;
+console.log(typeof isNewDrillSet);
+const drillSetId = localStorage.getItem("drillSetId");
+console.log("Is new drill set? " + isNewDrillSet);
+console.log("drillSetId " + drillSetId);
 
 async function renderDrillSet() {
-	const drillSetId = localStorage.getItem("drillSetId");
-	console.log("drillSetId " + drillSetId);
 	const oldDrillSet = await fetchDrillSet(drillSetId);
-	localStorage.removeItem("drillSetId");
-	console.log(oldDrillSet);
 	const sentences = oldDrillSet.sentences;
 	const audioFileNames = oldDrillSet.audio;
 	sentences.map((sentence, index) => {
@@ -21,10 +21,14 @@ async function renderDrillSet() {
 	nameInput.value = oldDrillSet.name;
 };
 
-if (!isNewDrillSet)
+if (!isNewDrillSet)  {
+	console.log("Rendering Drill Set");
 	renderDrillSet();
-else
+}
+else {
+	console.log("New Drill Set");
 	addSentence();
+}
 
 
 nameInput.addEventListener("input", () => {
@@ -37,9 +41,6 @@ nameInput.addEventListener("invalid", () => {
 	}
 });
 
-let nextSentenceCount = 0;
-
-let sentences = [];
 
 function addSentence() {
 	sentences.push(nextSentenceCount);
@@ -72,18 +73,19 @@ function addSentence() {
 	const audioLabel = document.createElement("label");
 	audioLabel.innerHTML = "Audio: "
 
+	const audioObj = document.createElement("audio");
+
 	const audioInput = document.createElement("input");
 	audioInput.name = audioName;
 	audioInput.setAttribute("type", "file");
 	audioInput.setAttribute("accept", ".wav");
-
-	// Create audio player after user uploaded an audio file.
-	// const audioObj = document.createElement("audio");
-	// audioObj.setAttribute("controls", "");
-	// audioObj.src = audioInput.files[0];
-
+	audioInput.addEventListener("change", (event) => {
+		// Create audio player after user uploaded an audio file.		
+		audioObj.src = window.URL.createObjectURL(audioInput.files[0]);
+		audioObj.setAttribute("controls", "");
+	});
 	audioLabel.appendChild(audioInput);
-	// audioLabel.appendChild(audioObj);
+	audioLabel.appendChild(audioObj);
 
 	newSentenceDiv.appendChild(deleteBtn);
 	newSentenceDiv.appendChild(sentenceLabel);
@@ -129,19 +131,24 @@ async function populateSentence(drillSetId, sentence, audioFileName) {
 	const audioLabel = document.createElement("label");
 	audioLabel.innerHTML = "Audio: "
 
-	const audioInput = document.createElement("input");
-	audioInput.name = audioName;
-	audioInput.setAttribute("type", "file");
-	audioInput.setAttribute("accept", ".wav");
-	audioInput.value == await fetchAudio(drillSetId, audioFileName);
-	
 	// Create audio player after user uploaded an audio file.
 	const audioObj = document.createElement("audio");
 	audioObj.setAttribute("controls", "");
 	const blob = await fetchAudio(drillSetId, audioFileName);
 	audioObj.src = window.URL.createObjectURL(blob);
-				
 
+	const audioInput = document.createElement("input");
+	audioInput.name = audioName;
+	audioInput.setAttribute("type", "file");
+	audioInput.setAttribute("accept", ".wav");
+	audioInput.value == await fetchAudio(drillSetId, audioFileName);
+	audioInput.addEventListener("change", (event) => {
+		// Create audio player after user uploaded an audio file.		
+		audioObj.src = window.URL.createObjectURL(audioInput.files[0]);
+		audioObj.setAttribute("controls", "");
+	});
+
+	
 	audioLabel.appendChild(audioInput);
 	audioLabel.appendChild(audioObj);
 	
@@ -202,6 +209,10 @@ async function submitForm() {
 	});
 
 
+	const endpoint = isNewDrillSet ? "newDrillSet" : "updateDrillSet";
+	if (!isNewDrillSet)
+		formData.append("drillSetId", drillSetId);
+
 	const payload = {
 		method: "POST",
 		mode: "cors",
@@ -209,7 +220,7 @@ async function submitForm() {
 		body: formData
 	};
 
-	const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/newDrillSet`, payload)
+	const response = await fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/${endpoint}`, payload)
 		.then( (response) => { return response.json(); } )	
 		.then( (data) => { return data } )
 		.catch( (err) => { return console.error(err); } );
