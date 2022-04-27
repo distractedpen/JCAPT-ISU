@@ -66,7 +66,7 @@ function deleteDrillSet() {
         .then((response) => response.json())
         .then((data) => {
             location.reload();
-        }
+        })
         .catch((err) => console.log(err));
     }
 
