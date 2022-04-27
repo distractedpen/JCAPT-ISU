@@ -1,7 +1,7 @@
 /**********************************
  * Global Variables
  **********************************/
-const env = {"SERVICE_HOST": "https://172.19.122.255", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
+const env = {"SERVICE_HOST": "https://172.19.122.255", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0", "CLIENT_PORT": "8001"};
 const selectEl = document.getElementById("drill-select");
 
 /********************
@@ -36,8 +36,39 @@ function fetchDrillSets() {
     });
 }
 
-function getDrill(){
-    localStorage.setItem("drill_set", selectEl.value);
+function createDrillSet() {
+    localStorage.setItem("isNewDrillSet", true);
+    window.location.href = `newDrillSet.html`;
+}
+
+function loadToUpdateDrillSet() {
+    localStorage.setItem("isNewDrillSet", false);
+    localStorage.setItem("drillSetId", selectEl.value);
+    window.location.href = `newDrillSet.html`;
+}
+
+function deleteDrillSet() {
+    if (confirm("This process cannot be undone. Delete this Drill Set?")) {
+
+        const payload = {
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            headers: {
+                "Content-Type": 'application/json',
+            },
+            body: JSON.stringify({
+                drillSetId: selectEl.value
+            })
+        };
+
+        fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/deleteDrillSet`, payload)
+        .then((response) => response.json())
+        .then((data) => data)
+        .catch((err) => console.log(err));
+    }
+
+    location.reload();
 }
 
 
@@ -45,4 +76,4 @@ function getDrill(){
  * Setup for page
  **********************/
 
- fetchDrillSets();
+fetchDrillSets();

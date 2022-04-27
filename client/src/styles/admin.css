@@ -30,6 +30,16 @@ input {
 	flex-shrink: 1;	
 }
 
+.delBtn {
+	background-color: red;
+	border:  none;
+	font-size:  18px;
+	width:  100px;
+	height:  50px;
+	margin: 10px;
+	flex-shrink: 1;		
+}
+
 .btn-long {
 	background-color: #eee;
 	border:  none;
@@ -52,15 +62,5 @@ input {
 	text-align: center;
 	align-items: center;
 	padding: 20px;
-}
-
-.small-content {
-	display: flex;
-	flex-direction:  column;
-	text-align: center;
-	align-items: center;
-	flex: 1;
-	margin-left: 10px;
-	margin-right: 10px;
 }
 
