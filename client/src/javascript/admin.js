@@ -64,7 +64,7 @@ function deleteDrillSet() {
 
         fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/deleteDrillSet`, payload)
         .then((response) => response.json())
-        .then((data) => console.log(data))
+        .then((data) => data)
         .catch((err) => console.log(err));
     }
 
