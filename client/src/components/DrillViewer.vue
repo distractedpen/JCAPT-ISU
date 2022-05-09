@@ -1,9 +1,12 @@
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
+
+const currentSentence = ref(0);
 
 const props = defineProps(["drillSet"]);
 const state = reactive({
-  currentSentence: 0,
+  prevDisabled: true,
+  nextDisabled: false,
   hasAudio: false,
   isRecording: false,
   audioURL: null,
@@ -17,6 +20,20 @@ let chunks = [];
 //   blob.name = filename;
 //   return blob;
 // }
+
+watch(currentSentence, () => {
+  if (currentSentence.value == 0) {
+    state.prevDisabled = true;
+    state.nextDisabled = false;
+  } else if (0 < currentSentence.value < props.drillSet.length) {
+    state.prevDisabled = false;
+    state.nextDisabled = false;
+  } else {
+    // end of list
+    state.prevDisabled = false;
+    state.nextDisabled = true;
+  }
+});
 
 /********************************
  * Setup and Callbacks and API Calls
@@ -92,12 +109,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // })
 
 function startRecord() {
-  console.log("Recording is Progress...");
   mediaRecorder.start();
 }
 
 function stopRecord() {
-  console.log("Stopped Recording.");
   mediaRecorder.stop();
 }
 </script>
@@ -105,11 +120,23 @@ function stopRecord() {
 <template>
   <div class="container">
     <div class="text-container">
-      <button class="previous" @click="state.currentSentence--">&lt;</button>
+      <button
+        class="previous"
+        @click="currentSentence--"
+        :disabled="state.prevDisabled"
+      >
+        &lt;
+      </button>
       <p class="sen-text">
-        {{ props.drillSet.sentences[state.currentSentence] }}
+        {{ props.drillSet.sentences[currentSentence] }}
       </p>
-      <button class="next" @click="state.currentSentence++">&gt;</button>
+      <button
+        class="next"
+        @click="currentSentence++"
+        :disabled="state.nextDisabled"
+      >
+        &gt;
+      </button>
     </div>
     <div class="listen-container">
       <button class="listen-btn">Listen</button>
@@ -201,6 +228,6 @@ button {
 }
 
 .hidden {
-  visibility:  hidden;
+  visibility: hidden;
 }
 </style>
