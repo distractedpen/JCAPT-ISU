@@ -1,30 +1,49 @@
-// function fetchDrillSets() {
-//   const payload = {
-//     method: "POST",
-//     mode: "cors",
-//     cache: "no-cache",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//   };
-//   fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSets`, payload)
-//     .then((response) => response.json())
-//     .then((json) => {
-//       const drillSets = json.drill_sets;
-//       console.log(drillSets);
-//       drillSets.forEach((drillset) => {
-//         console.log(drillset);
-//         const optionEl = document.createElement("option");
-//         optionEl.value = drillset["id"];
-//         optionEl.textContent = drillset["name"];
-//         selectEl.appendChild(optionEl);
-//       });
-//     })
-//     .catch((err) => {
-//       console.log(err);
-//       return err;
-//     });
-// }
+console.log(import.meta.env);
+
+const SERVICE_HOST = import.meta.env.VITE_SERVICE_HOST;
+const SERVICE_PORT = import.meta.env.VITE_SERVICE_PORT;
+const SERVICE_URL = `https://${SERVICE_HOST}:${SERVICE_PORT}`;
+
+async function jsonAPI(endpoint, body) {
+  const payload = {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body,
+  };
+
+  const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload)
+    .then((response) => response.json())
+    .catch((error) => {
+      return { status: "error", message: error };
+    });
+
+  return response;
+}
+
+async function blobAPI(endpoint, body) {
+  const payload = {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body,
+  };
+
+  try {
+    const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload).then(
+      (response) => response.blob()
+    );
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 // export default {
 //   fetchDrillSets,
@@ -47,10 +66,10 @@
 //     drillSet = json.drillSet;
 //     fetchAudio(drillSetId, drillSet.audio[current_sentence]);
 //     senText.innerHTML = drillSet.sentences[current_sentence];
-//    }) 
-//   .catch( (err) => { 
-//     console.log(err); 
-//   }); 
+//    })
+//   .catch( (err) => {
+//     console.log(err);
+//   });
 // }
 
 // function fetchAudio(drillSetId, fileName) {
@@ -92,7 +111,6 @@
 //   cache: "no-cache",
 //   body: formData,
 // };
-
 // const response = await fetch(
 //   `${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`,
 //   payload
@@ -106,3 +124,8 @@
 //   .catch((err) => {
 //     return console.error(err);
 //   });
+
+export default {
+  jsonAPI,
+  blobAPI,
+};

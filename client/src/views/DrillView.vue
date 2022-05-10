@@ -5,51 +5,47 @@
 import DrillSelector from "../components/DrillSelector.vue";
 import DrillViewer from "../components/DrillViewer.vue";
 import { reactive } from "vue";
-// import service from "../service/service.js";
+import service from "../service/service.js";
 
-// const env = {"SERVICE_HOST": "https://172.19.122.255", "SERVICE_PORT": "8000", "CLIENT_HOST": "0.0.0.0"};
-// const selectEl = document.getElementById("drill-select");
-
-/**********************
- * Setup for page
- **********************/
-
-// Get chosen data from DrillSector, send correct drill set to Drill Viewer
-const drillSetList = [
-  { id: "1", name: "Set 1" },
-  { id: "2", name: "Set 2" },
-];
-
-const drillSets = {
-  1: {
-    name: "Set 1",
-    sentences: ["Sentence 1 Set 1", "Sentence 2 Set 1"],
-    audio: ["sent1.mp3", "sent2.mp3"],
-  },
-  2: {
-    name: "Set 2",
-    sentences: ["Sentence 1 Set 2", "Sentence 2 Set 2"],
-    audio: ["sent1.mp3", "sent2.mp3"],
-  },
-};
-// service.fetchDrillSets();
-//
-// const drillSet = service.fetchDrillSet(name);
 const state = reactive({
-  drillSetList: drillSetList,
+  drillSetId: null,
   drillSet: null,
+  drillSetList: [],
   validSelection: false,
+  currentListeningURL: "",
 });
 
-function fetchDrillSet(drillSetId) {
-  const drillSet = state.drillSetList.find(
-    (drillSet) => drillSet.id == drillSetId
+const fetchDrillSets = async () => {
+  const json = service.jsonAPI("getDrillSets", {});
+  json.then((data) => {
+    state.drillSetList = data.drill_sets;
+  });
+};
+fetchDrillSets();
+
+const fetchDrillSet = async (drillSetId) => {
+  state.drillSetId = drillSetId;
+  const json = service.jsonAPI(
+    "getDrillSet",
+    JSON.stringify({ drill_set_id: drillSetId })
   );
-  console.log(drillSetId, drillSet);
-  state.validSelection = true;
-  state.drillSet = drillSets[drillSetId];
-  console.log(state.drillSet);
-}
+  json.then((data) => {
+    state.drillSet = data.drillSet;
+    state.validSelection = true;
+    fetchAudio(drillSetId, data.drillSet.audio[0]);
+  });
+};
+
+const fetchAudio = async (drillSetId, fileName) => {
+  const blob = service.blobAPI(
+    "getAudio",
+    JSON.stringify({ drillSetId: drillSetId, fileName: fileName })
+  );
+  blob.then((blob) => {
+    console.log(blob);
+    state.currentListeningURL = window.URL.createObjectURL(blob);
+  });
+};
 </script>
 
 <template>
@@ -68,6 +64,8 @@ function fetchDrillSet(drillSetId) {
   <DrillViewer
     v-if="state.validSelection && state.drillSet"
     :drillSet="state.drillSet"
+    @fetchAudio="(filename) => fetchAudio(state.drillSetId, filename)"
+    :currentListeningURL="state.currentListeningURL"
   />
 </template>
 
