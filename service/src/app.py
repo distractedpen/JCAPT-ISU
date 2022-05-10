@@ -18,7 +18,7 @@ base_path = os.getcwd()
 drill_pathname = os.path.join(os.getcwd(), "service/drills")
 log_pathname = os.path.join(os.getcwd(), "service/logs")
 model_pathname = os.path.join(os.getcwd(), "service/model")
-ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
+ssl_pathname = os.path.join(os.getcwd(), "ssl");
 
 env = {
     "DRILL_DIR": drill_pathname,
