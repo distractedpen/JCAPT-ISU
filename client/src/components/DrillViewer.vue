@@ -1,37 +1,35 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
 
-const currentSentence = ref(0);
-
-const props = defineProps(["drillSet"]);
+const props = defineProps(["drillSet", "currentListeningURL"]);
+const emit = defineEmits(["fetchAudio"]);
+console.log(props.drillSet);
 const state = reactive({
   prevDisabled: true,
-  nextDisabled: false,
+  nextDisabled: props.drillSet.sentences.length > 1 ? false : true,
   hasAudio: false,
   isRecording: false,
   audioURL: null,
 });
 
+const currentSentence = ref(0);
 let audio = ref(null);
+let listen = ref(null);
 let mediaRecorder = null;
 let chunks = [];
-// function blobToFile(blob, filename) {
-//   blob.lastModifiedDate = new Date();
-//   blob.name = filename;
-//   return blob;
-// }
 
 watch(currentSentence, () => {
+  emit("fetchAudio", props.drillSet.audio[currentSentence.value]);
   if (currentSentence.value == 0) {
     state.prevDisabled = true;
-    state.nextDisabled = false;
-  } else if (0 < currentSentence.value < props.drillSet.length) {
-    state.prevDisabled = false;
-    state.nextDisabled = false;
   } else {
-    // end of list
     state.prevDisabled = false;
+  }
+
+  if (currentSentence.value == props.drillSet.sentences.length - 1) {
     state.nextDisabled = true;
+  } else {
+    state.nextDisabled = false;
   }
 });
 
@@ -65,6 +63,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 } else {
   console.log("getUserMedia not supported on your browser!");
 }
+
+// function blobToFile(blob, filename) {
+//   blob.lastModifiedDate = new Date();
+//   blob.name = filename;
+//   return blob;
+// }
 
 // const audioFile = blobToFile(blob, `${clipName}.ogg`);
 
@@ -139,7 +143,19 @@ function stopRecord() {
       </button>
     </div>
     <div class="listen-container">
-      <button class="listen-btn">Listen</button>
+      <button
+        class="listen-btn"
+        @click="() => listen.play()"
+        v-if="props.currentListeningURL"
+      >
+        Listen
+      </button>
+      <audio
+        ref="listen"
+        :src="props.currentListeningURL"
+        class="listen-audio"
+        controls="disabled"
+      ></audio>
     </div>
     <p class="rec-text">
       Press Record and Start Speaking. Press Stop to Send Recording to Service.
@@ -216,6 +232,12 @@ button {
 .sen-text {
   font-size: 20px;
   margin: 10px;
+}
+
+.listen-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .listen-audio {
