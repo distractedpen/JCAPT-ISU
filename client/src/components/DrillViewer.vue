@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
 
-const props = defineProps(["drillSet", "currentListeningURL"]);
-const emit = defineEmits(["fetchAudio"]);
+const props = defineProps(["drillSet", "currentListeningURL", "result"]);
+const emit = defineEmits(["fetchAudio", "fetchResult"]);
 console.log(props.drillSet);
 const state = reactive({
   prevDisabled: true,
@@ -54,6 +54,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         state.hasAudio = true;
         audio.value.src = state.audioURL;
         audio.value.controls = true;
+
+        // send data to service
+        blob.lastModifiedDate = new Date();
+        blob.name = "voice_cap" + Date.now().toString();
+
+        emit("fetchResult", blob, currentSentence);
       };
       console.log(mediaRecorder);
     })
@@ -64,43 +70,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   console.log("getUserMedia not supported on your browser!");
 }
 
-// function blobToFile(blob, filename) {
-//   blob.lastModifiedDate = new Date();
-//   blob.name = filename;
-//   return blob;
-// }
-
-// const audioFile = blobToFile(blob, `${clipName}.ogg`);
-
-// const formData = new FormData();
-// formData.append("id", drillSetId);
-// formData.append("index", current_sentence);
-// formData.append("audio", audioFile);
-
-// payload = {
-//   method: "POST",
-//   mode: "cors",
-//   cache: "no-cache",
-//   body: formData,
-// };
-
-// const response = await fetch(
-//   `${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`,
-//   payload
-// )
-//   .then((response) => {
-//     return response.json();
-//   })
-//   .then((data) => {
-//     return data.result;
-//   })
-//   .catch((err) => {
-//     return console.error(err);
-//   });
-
-// const correct_aligned = response.correct;
-// const result_aligned = response.result;
-// const align_str = response.align_str;
 
 // recText.innerHTML = "";
 // align_str.forEach((char, index) => {
@@ -157,9 +126,7 @@ function stopRecord() {
         controls="disabled"
       ></audio>
     </div>
-    <p class="rec-text">
-      Press Record and Start Speaking. Press Stop to Send Recording to Service.
-    </p>
+    <slot></slot>
     <audio ref="audio" :class="{ hidden: !state.hasAudio }"></audio>
     <div class="audio-controls">
       <button :class="{ recording: state.isRecording }" @click="startRecord">

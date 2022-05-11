@@ -15,13 +15,15 @@ async function jsonAPI(endpoint, body) {
     body: body,
   };
 
-  const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload)
-    .then((response) => response.json())
-    .catch((error) => {
-      return { status: "error", message: error };
-    });
+  try {
+    const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload).then(
+      (response) => response.json()
+    );
 
-  return response;
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 async function blobAPI(endpoint, body) {
@@ -45,87 +47,26 @@ async function blobAPI(endpoint, body) {
   }
 }
 
-// export default {
-//   fetchDrillSets,
-// };
-// function fetchDrillSet(drillSetId) {
-//   const payload = {
-//     method: "POST",
-//     mode: "cors",
-//     cache: "no-cache",
-//     headers: {
-//       "Content-Type": 'application/json',
-//     },
-//     body: JSON.stringify({
-//       drill_set_id: drillSetId
-//     })
-//   };
-//   fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getDrillSet`, payload)
-//   .then( (response) => response.json())
-//   .then( (json) => {
-//     drillSet = json.drillSet;
-//     fetchAudio(drillSetId, drillSet.audio[current_sentence]);
-//     senText.innerHTML = drillSet.sentences[current_sentence];
-//    })
-//   .catch( (err) => {
-//     console.log(err);
-//   });
-// }
+async function formDataAPI(endpoint, formdata) {
+  const payload = {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    body: formdata,
+  };
 
-// function fetchAudio(drillSetId, fileName) {
-//   const payload = {
-//     method: "POST",
-//     mode: "cors",
-//     cache: "no-cache",
-//     headers: {
-//       "Content-Type": 'application/json'
-//     },
-//     body: JSON.stringify({
-//       drillSetId: drillSetId,
-//       fileName: fileName,
-//     })
-//   };
-//   fetch(`${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/getAudio`, payload)
-//   .then( (response) => response.blob())
-//   .then( (blob) => {
-//       const r_audio = document.querySelector(".listen-audio");
-//       if (r_audio !== null)
-//         listenContainer.removeChild(r_audio);
-
-//       let audio = document.createElement("audio");
-//       audio.className = "listen-audio";
-
-//       audio.src = window.URL.createObjectURL(blob);
-//       audio.setAttribute("controls", 'disabled');
-//       listenContainer.appendChild(audio);
-
-//       listenBtn.onclick = function () {
-//         audio.play();
-//       }
-//   })
-// }
-
-// payload = {
-//   method: "POST",
-//   mode: "cors",
-//   cache: "no-cache",
-//   body: formData,
-// };
-// const response = await fetch(
-//   `${env["SERVICE_HOST"]}:${env["SERVICE_PORT"]}/results`,
-//   payload
-// )
-//   .then((response) => {
-//     return response.json();
-//   })
-//   .then((data) => {
-//     return data.result;
-//   })
-//   .catch((err) => {
-//     return console.error(err);
-//   });
+  try {
+    const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload).then(
+      (response) => response.json()
+    );
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 export default {
   jsonAPI,
   blobAPI,
+  formDataAPI,
 };
