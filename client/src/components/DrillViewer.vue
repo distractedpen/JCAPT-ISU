@@ -3,7 +3,6 @@ import { ref, reactive, watch } from "vue";
 
 const props = defineProps(["drillSet", "currentListeningURL", "result"]);
 const emit = defineEmits(["fetchAudio", "fetchResult"]);
-console.log(props.drillSet);
 const state = reactive({
   prevDisabled: true,
   nextDisabled: props.drillSet.sentences.length > 1 ? false : true,
@@ -18,6 +17,7 @@ let listen = ref(null);
 let mediaRecorder = null;
 let chunks = [];
 
+emit("fetchAudio", props.drillSet.audio[currentSentence.value]);
 watch(currentSentence, () => {
   emit("fetchAudio", props.drillSet.audio[currentSentence.value]);
   if (currentSentence.value == 0) {
@@ -70,17 +70,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   console.log("getUserMedia not supported on your browser!");
 }
 
-
-// recText.innerHTML = "";
-// align_str.forEach((char, index) => {
-//   let charSpan = document.createElement("span");
-//   if (char === "-") charSpan.style.color = "red";
-//   charSpan.innerHTML = result_aligned[index];
-//   recText.appendChild(charSpan);
-// });
-//   };
-// })
-
 function startRecord() {
   mediaRecorder.start();
 }
@@ -115,7 +104,7 @@ function stopRecord() {
       <button
         class="listen-btn"
         @click="() => listen.play()"
-        v-if="props.currentListeningURL"
+        v-if="props.drillSet.audio[currentSentence]"
       >
         Listen
       </button>

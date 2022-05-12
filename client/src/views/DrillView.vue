@@ -1,54 +1,22 @@
 <script setup>
-/**********************************
- * Global Variables
- **********************************/
-import DrillSelector from "../components/DrillSelector.vue";
+import DrillManager from "../components/DrillManager.vue";
 import DrillViewer from "../components/DrillViewer.vue";
+import PageHeader from "../components/PageHeader.vue";
 import { reactive, ref } from "vue";
 import service from "../service/service.js";
 
 const resultText = ref(null);
 
 const state = reactive({
-  drillSetId: null,
+  routeFrom: "drill",
   drillSet: null,
-  drillSetList: [],
-  validSelection: false,
   currentListeningURL: "",
   hasResult: false,
   result: {},
 });
 
-const fetchDrillSets = async () => {
-  const json = service.jsonAPI("getDrillSets", {});
-  json.then((data) => {
-    state.drillSetList = data.drill_sets;
-  });
-};
-fetchDrillSets();
-
-const fetchDrillSet = async (drillSetId) => {
-  state.drillSetId = drillSetId;
-  const json = service.jsonAPI(
-    "getDrillSet",
-    JSON.stringify({ drill_set_id: drillSetId })
-  );
-  json.then((data) => {
-    state.drillSet = data.drillSet;
-    state.validSelection = true;
-    fetchAudio(drillSetId, data.drillSet.audio[0]);
-  });
-};
-
-const fetchAudio = async (drillSetId, fileName) => {
-  const blob = service.blobAPI(
-    "getAudio",
-    JSON.stringify({ drillSetId: drillSetId, fileName: fileName })
-  );
-  blob.then((blob) => {
-    console.log(blob);
-    state.currentListeningURL = window.URL.createObjectURL(blob);
-  });
+const runDrillSet = (drillSet) => {
+  state.drillSet = drillSet;
 };
 
 const fetchResult = async (drillSetId, audio, currentSentence) => {
@@ -71,30 +39,38 @@ const fetchResult = async (drillSetId, audio, currentSentence) => {
     resultText.value.innerHTML = resultHTML;
   });
 };
+
+const fetchAudio = async (drillSetId, fileName) => {
+  const blob = await service.blobAPI(
+    "getAudio",
+    JSON.stringify({
+      drillSetId: drillSetId,
+      fileName: fileName,
+    })
+  );
+  state.currentListeningURL = window.URL.createObjectURL(blob);
+};
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Voice Recognition in Japanese with Vosk</h1>
-  </div>
+  <PageHeader />
 
-  <!--Send drill set list to DrillSelector component-->
-  <DrillSelector
-    v-if="!state.validSelection || !state.drillSet"
-    :drillSetList="state.drillSetList"
-    @selectDrillSet="(drillSetId) => fetchDrillSet(drillSetId)"
+  <DrillManager
+    v-if="!state.drillSet"
+    :routeFrom="state.routeFrom"
+    @getDrill="(drillset) => runDrillSet(drillset)"
   />
 
   <!--DrillViewer gets drill set data from DrillSelector-->
   <DrillViewer
-    v-if="state.validSelection && state.drillSet"
+    v-if="state.drillSet"
     :drillSet="state.drillSet"
     :currentListeningURL="state.currentListeningURL"
     :result="state.result"
-    @fetchAudio="(filename) => fetchAudio(state.drillSetId, filename)"
+    @fetchAudio="(fileName) => fetchAudio(state.drillSet.id, fileName)"
     @fetchResult="
       (audio, currentSentence) =>
-        fetchResult(state.drillSetId, audio, currentSentence)
+        fetchResult(state.drillSet.id, audio, currentSentence)
     "
   >
     <p ref="resultText">
