@@ -19,19 +19,20 @@ const fetchDrillSets = async () => {
 fetchDrillSets();
 
 const fetchDrillSet = async (drillSetId) => {
-  const json = service.jsonAPI(
-    "getDrillSet",
-    JSON.stringify({ drill_set_id: drillSetId })
-  );
-  json.then((data) => {
-    if (props.routeFrom === "drill") {
+  if (
+    props.routeFrom === "drill" ||
+    (props.routeFrom === "admin" && drillSetId)
+  ) {
+    const json = service.jsonAPI(
+      "getDrillSet",
+      JSON.stringify({ drill_set_id: drillSetId })
+    );
+    json.then((data) => {
       emit("getDrill", { ...data.drillSet, id: drillSetId });
-    } else if (props.routeFrom === "admin" && !drillSetId) {
-      emit("getDrill", {});
-    } else if (props.routeFrom === "admin" && drillSetId) {
-      emit("getDrill", { ...data.drillSet, id: drillSetId });
-    }
-  });
+    });
+  } else if (props.routeFrom === "admin" && !drillSetId) {
+    emit("getDrill", {});
+  }
 };
 </script>
 

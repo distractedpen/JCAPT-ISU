@@ -58,7 +58,7 @@ const fetchAudio = async (drillSetId, fileName) => {
   <DrillManager
     v-if="!state.drillSet"
     :routeFrom="state.routeFrom"
-    @getDrill="(drillset) => runDrillSet(drillset)"
+    @getDrill="(drillset) => getDrillSet(drillset)"
   />
 
   <!--DrillViewer gets drill set data from DrillSelector-->
