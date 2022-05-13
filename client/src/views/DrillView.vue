@@ -15,7 +15,7 @@ const state = reactive({
   result: {},
 });
 
-const runDrillSet = (drillSet) => {
+const getDrillSet = (drillSet) => {
   state.drillSet = drillSet;
 };
 
@@ -73,7 +73,7 @@ const fetchAudio = async (drillSetId, fileName) => {
         fetchResult(state.drillSet.id, audio, currentSentence)
     "
   >
-    <p ref="resultText">
+    <p ref="resultText" class="resultText">
       Press Record and Start Speaking. Press Stop to Send Recording to Service.
     </p>
   </DrillViewer>
@@ -81,4 +81,8 @@ const fetchAudio = async (drillSetId, fileName) => {
 
 <style>
 @import "@/assets/style.css";
+
+.resultText {
+  font-size: 24px;
+}
 </style>
