@@ -3,7 +3,7 @@
 // eslint-disable-next-line no-undef
 const express = require("express");
 const app = express();
-const HOST = "0.0.0.0";
+const HOST = "localhost";
 const PORT = 8001;
 
 app.use(express.static("dist"));
