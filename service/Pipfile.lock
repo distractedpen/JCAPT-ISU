@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4ff5e294b56f497f4de77ab220fa50c57991101b7f16b5f65c6fcbf4dcb81f56"
+            "sha256": "6bb1d17abcb3003d50e4f3ec7f0e3b3a94e83801984e1801b24cbb4f340a6a83"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -170,6 +170,14 @@
             ],
             "version": "==2.21"
         },
+        "pyjwt": {
+            "hashes": [
+                "sha256:72d1d253f32dbd4f5c88eaf1fdc62f3a19f676ccbadb9dbc5d07e951b2b26daf",
+                "sha256:d42908208c699b3b973cbeb01a969ba6a96c821eefb1c5bfe4c390c01d67abba"
+            ],
+            "index": "pypi",
+            "version": "==2.4.0"
+        },
         "python-dotenv": {
             "hashes": [
                 "sha256:b7e3b04a59693c42c36f9ab1cc2acc46fa5df8c78e178fc33a8d4cd05c8d498f",
@@ -188,10 +196,10 @@
         },
         "vosk": {
             "hashes": [
-                "sha256:a2bdd3cc30db751af04611088a1658850865ebbccbeaa006c3fe791105250b62"
+                "sha256:af5b5d245cdabd294b09efacb525d6ea812f26c4dcb3fdb13ad77ee218a9306c"
             ],
             "index": "pypi",
-            "version": "==0.3.37"
+            "version": "==0.3.38"
         },
         "wave": {
             "hashes": [

@@ -2,17 +2,20 @@
 # Imports
 ###############################
 import sys, json, subprocess, os, time, signal
-import uuid
+import uuid, jwt
+
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 from DrillSetHandler import DrillSetHandler
 from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
-
+from UserHandler import UserHandler
+from auth_middleware import token_required
 
 ###############################
 # Env Setup
 ###############################
+
 os.chdir("../..")
 base_path = os.getcwd()
 drill_pathname = os.path.join(os.getcwd(), "service/drills")
@@ -44,6 +47,10 @@ wav_parser = WavParser(env["MODEL_DIR"])
 
 file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
+
+JWT_SECRET_KEY = os.environ.get("CAPT_FLASK_JWT_KEY") or "This is a test key."
+print(JWT_SECRET_KEY)
+app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 ###############################
 #  Helper Functions
@@ -89,7 +96,7 @@ def compare_results(result, correct):
 # App Routes (End Points)
 ##############################
 
-
+# /status
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
 def status():
@@ -98,6 +105,7 @@ def status():
     return {"status": "online", "method": "GET"}
 
 
+# /results
 @app.route("/results", methods=["POST"])
 @cross_origin()
 def test():
@@ -138,12 +146,14 @@ def test():
             return { "status": "success", "result": str_alignment}
         return {"status": "failure", "result": ""}
 
+# /getDrillSets
 @app.route("/getDrillSets", methods=["GET", "POST"])
 @cross_origin()
 def get_drill_sets():
     drill_sets = drill_data_handler.get_drill_sets()
     return {"drill_sets": drill_sets}
 
+# /getDrillSet
 @app.route("/getDrillSet", methods=["POST"])
 @cross_origin()
 def get_drill_set():
@@ -152,7 +162,7 @@ def get_drill_set():
     drill_set_data = drill_data_handler.get_drill_set(drill_set_id) 
     return {"drillSet": drill_set_data}
 
-
+# /getAudio
 @app.route("/getAudio", methods=["POST"])
 @cross_origin()
 def get_sentence_audio():
@@ -167,9 +177,11 @@ def get_sentence_audio():
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
 
+# /newDrillSet
 @app.route("/newDrillSet", methods=["POST"])
 @cross_origin()
-def new_drill_set():
+@token_required
+def new_drill_set(current_user, *args, **kwargs):
     
     id = str(uuid.uuid4())
     new_audio_dir = os.path.join(env["AUDIO_DIR"], id)
@@ -191,10 +203,11 @@ def new_drill_set():
     
     return {"status": "success"}
 
-
+# /deleteDrillSet
 @app.route("/deleteDrillSet", methods=["POST"])
 @cross_origin()
-def delete_drill_set():
+@token_required
+def delete_drill_set(current_user, *args, **kwargs):
     
     data = json.loads(request.data)
     id = data["drillSetId"]
@@ -203,9 +216,11 @@ def delete_drill_set():
 
     return {"status": "success"}
 
+# /updateDrillSet
 @app.route("/updateDrillSet", methods=["POST"])
 @cross_origin()
-def update_drill_set():
+@token_required
+def update_drill_set(current_user, *args, **kwargs):
     
     id = request.form["drillSetId"]
     audio_dir = os.path.join(env["AUDIO_DIR"], id)
@@ -226,6 +241,68 @@ def update_drill_set():
         audio_data.save(pathname)
     
     return {"status": "success"}
+
+
+# /login
+# Modified Tutorial from 
+# https://www.loginradius.com/blog/engineering/guest-post/securing-flask-api-with-jwt/
+@app.route("/login", methods=["POST"])
+@cross_origin()
+def login():
+    try:
+        data = request.json
+        print(data)
+        if not data:
+            return {
+                "message": "Please provide user details",
+                "data": None,
+                "error": "Bad request"
+            }, 400
+        is_validated = True
+        if data.get("email") is None or data.get("password") is None:
+            is_validated = False
+        if not is_validated:
+            return {
+                "message": "Invalid data",
+                "data": None,
+                "error": "Invalid data"
+            }, 400
+        print("logging user in")
+        user = UserHandler().login(data["email"], data["password"])
+        print(f"{user=}")
+        if user:
+            try:
+                print("user id", user["id"])
+                print(f"{app.config['JWT_SECRET_KEY']=}")
+                user["token"] = jwt.encode(
+                    {"user_id": user["id"]},
+                    app.config["JWT_SECRET_KEY"],
+                    algorithm="HS256"
+                )
+                print(f"{user['token']=}")
+                return {
+                    "message": "Successfully fetched auth token",
+                    "data": user
+                }
+            except Exception as e:
+                return {
+                    "message": "Something went wrong while encoding jwt.",
+                    "error": str(e),
+                    "data": None
+                }, 500
+        return {
+            "message": "Error fetching auth token. Invalid email or password",
+            "data": None,
+            "error": "Unauthorized"
+        }, 404
+    except Exception as e:
+        return {
+            "message": "Something when wrong!",
+            "error": str(e),
+            "data": None
+        }, 500
+
+# /users/authenticate
 
 
 ##############################
