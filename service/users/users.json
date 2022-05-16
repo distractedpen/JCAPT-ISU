@@ -1,14 +1,9 @@
 {
 	"bf313196-54be-4e28-845f-83303e28e25c": {
 		"id": "bf313196-54be-4e28-845f-83303e28e25c",
-		"name": "Test-1",
-		"email": "test1@example.com",
-		"password": "pbkdf2:sha256:260000$UcFeqic0YyZ9Rv7D$84a299803620e39e0a9cb5584b88abcb9f16d85ef94a0e140dc1e8edebf2b1fe"
-	},
-	"9a749349-283e-4c4c-83d4-593099ac2f48": {
-		"id": "9a749349-283e-4c4c-83d4-593099ac2f48",
-		"name": "Test 2",
-		"email": "test2@example.com",
-		"password": "abcdefg"
+		"name": "Test User",
+		"email": "test@example.com",
+		"password": "pbkdf2:sha256:260000$UcFeqic0YyZ9Rv7D$84a299803620e39e0a9cb5584b88abcb9f16d85ef94a0e140dc1e8edebf2b1fe",
+		"active": "True"
 	}
 }

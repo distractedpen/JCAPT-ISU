@@ -181,7 +181,7 @@ def get_sentence_audio():
 @app.route("/newDrillSet", methods=["POST"])
 @cross_origin()
 @token_required
-def new_drill_set():
+def new_drill_set(current_user, *args, **kwargs):
     
     id = str(uuid.uuid4())
     new_audio_dir = os.path.join(env["AUDIO_DIR"], id)
@@ -207,7 +207,7 @@ def new_drill_set():
 @app.route("/deleteDrillSet", methods=["POST"])
 @cross_origin()
 @token_required
-def delete_drill_set():
+def delete_drill_set(current_user, *args, **kwargs):
     
     data = json.loads(request.data)
     id = data["drillSetId"]
@@ -220,7 +220,7 @@ def delete_drill_set():
 @app.route("/updateDrillSet", methods=["POST"])
 @cross_origin()
 @token_required
-def update_drill_set():
+def update_drill_set(current_user, *args, **kwargs):
     
     id = request.form["drillSetId"]
     audio_dir = os.path.join(env["AUDIO_DIR"], id)

@@ -5,7 +5,7 @@ const SERVICE_PORT = import.meta.env.VITE_SERVICE_PORT;
 const SERVICE_URL = `https://${SERVICE_HOST}:${SERVICE_PORT}`;
 
 function addAuth() {
-  let user = localStorage.getItem("user");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   if (user && user.token) {
     return "JWT " + user.token;
@@ -14,20 +14,17 @@ function addAuth() {
   }
 }
 
-async function jsonAPI(endpoint, body, doAuth) {
+async function jsonAPI(endpoint, body) {
   const payload = {
     method: "POST",
     mode: "cors",
     cache: "no-cache",
     headers: {
       "Content-Type": "application/json",
+      Authorization: addAuth(),
     },
     body: body,
   };
-
-  if (doAuth) {
-    payload.headers["Authorization"] = addAuth();
-  }
 
   try {
     const response = await fetch(`${SERVICE_URL}/${endpoint}`, payload).then(
@@ -47,6 +44,7 @@ async function blobAPI(endpoint, body) {
     cache: "no-cache",
     headers: {
       "Content-Type": "application/json",
+      Authorization: addAuth(),
     },
     body: body,
   };
@@ -66,6 +64,9 @@ async function formDataAPI(endpoint, formdata) {
     method: "POST",
     mode: "cors",
     cache: "no-cache",
+    headers: {
+      Authorization: addAuth(),
+    },
     body: formdata,
   };
 
