@@ -20,7 +20,7 @@ const login = async () => {
   );
   if (response.data) {
     localStorage.setItem("user", JSON.stringify(response.data));
-    router.push("/");
+    router.push("/admin");
   } else {
     statusRef.value.innerHTML = response.error;
   }
