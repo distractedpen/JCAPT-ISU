@@ -1,0 +1,14 @@
+{
+	"bf313196-54be-4e28-845f-83303e28e25c": {
+		"id": "bf313196-54be-4e28-845f-83303e28e25c",
+		"name": "Test-1",
+		"email": "test1@example.com",
+		"password": "123456"
+	},
+	"9a749349-283e-4c4c-83d4-593099ac2f48": {
+		"id": "9a749349-283e-4c4c-83d4-593099ac2f48",
+		"name": "Test 2",
+		"email": "test2@example.com",
+		"password": "abcdefg"
+	}
+}

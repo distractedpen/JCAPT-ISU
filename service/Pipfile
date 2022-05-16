@@ -9,6 +9,7 @@ flask = "*"
 wave = "*"
 flask-cors = "*"
 python-dotenv = "*"
+pyjwt = "*"
 
 [dev-packages]
 
