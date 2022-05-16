@@ -125,7 +125,7 @@ const fetchCreate = async (formData) => {
 };
 
 const fetchUpdate = async (formData) => {
-  const response = service.formDataAPI("newDrillSet", formData);
+  const response = service.formDataAPI("updateDrillSet", formData);
   response.then((json) => {
     if (json.status == "success") {
       messageTimeOut("success", "Drill Set updated successfully");
