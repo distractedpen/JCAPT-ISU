@@ -1,6 +1,21 @@
 <script setup>
+import { computed } from "vue";
 import { useRouter } from "vue-router";
+
 const router = useRouter();
+let user = JSON.parse(localStorage.getItem("user"));
+
+console.log(user);
+
+const logout = () => {
+  localStorage.removeItem("user");
+  user = null;
+  router.push("/");
+};
+
+const userMessage = computed( () => {
+  return user ? `Welcome, ${user.name}!` : "";
+});
 </script>
 
 <template>
@@ -10,6 +25,8 @@ const router = useRouter();
       <button @click="router.push('/')">Drill</button>
       <button @click="router.push('/admin')">Admin</button>
     </div>
+    <p v-if="user">{{ userMessage }}</p>
+    <button v-if="user" @click="logout">Logout</button>
   </div>
 </template>
 

@@ -3,6 +3,7 @@
 ###############################
 import sys, json, subprocess, os, time, signal
 import uuid, jwt
+
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -47,7 +48,8 @@ wav_parser = WavParser(env["MODEL_DIR"])
 file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
 
-JWT_SECRET_KEY = os.environ.get("CAPT_FLASK_JWT_KEY")
+JWT_SECRET_KEY = os.environ.get("CAPT_FLASK_JWT_KEY") or "This is a test key."
+print(JWT_SECRET_KEY)
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 ###############################
@@ -241,18 +243,20 @@ def update_drill_set():
     return {"status": "success"}
 
 
-# /users/login
+# /login
 # Modified Tutorial from 
 # https://www.loginradius.com/blog/engineering/guest-post/securing-flask-api-with-jwt/
-@app.route("/users/login", methods=["POST"])
+@app.route("/login", methods=["POST"])
+@cross_origin()
 def login():
     try:
         data = request.json
+        print(data)
         if not data:
             return {
                 "message": "Please provide user details",
                 "data": None,
-                "eror": "Bad request"
+                "error": "Bad request"
             }, 400
         is_validated = True
         if data.get("email") is None or data.get("password") is None:
@@ -263,21 +267,26 @@ def login():
                 "data": None,
                 "error": "Invalid data"
             }, 400
-        user = UserHandler.login(data["email"], data["password"])
+        print("logging user in")
+        user = UserHandler().login(data["email"], data["password"])
+        print(f"{user=}")
         if user:
             try:
+                print("user id", user["id"])
+                print(f"{app.config['JWT_SECRET_KEY']=}")
                 user["token"] = jwt.encode(
                     {"user_id": user["id"]},
                     app.config["JWT_SECRET_KEY"],
                     algorithm="HS256"
                 )
+                print(f"{user['token']=}")
                 return {
                     "message": "Successfully fetched auth token",
                     "data": user
                 }
             except Exception as e:
                 return {
-                    "message": "Something went wrong",
+                    "message": "Something went wrong while encoding jwt.",
                     "error": str(e),
                     "data": None
                 }, 500

@@ -11,7 +11,6 @@ def save_data():
 		fd.write(json.dumps(users))
 
 class UserHandler:
-
 	def __init__(self):
 		return
 
@@ -38,8 +37,9 @@ class UserHandler:
 			user = users[user_id]
 		except KeyError:
 			return
-		user.pop("password")
-		return user
+		user_no_pass = {**user, "password": ""}
+		del user_no_pass["password"]
+		return user_no_pass
 
 	def get_by_email(self, email):
 		for id in users:
@@ -55,9 +55,15 @@ class UserHandler:
 		return generate_password_hash(password)
 
 	def login(self, email, password):
+		print(f"{email=} {password=}")
 		user = self.get_by_email(email)
+		print(user)
 		if not user or not check_password_hash(user["password"], password):
+			print("password hash failed.")
 			return
-		user.pop("password")
-		return user
+		print("Found User")
+		print("Password accepted.")
+		user_no_pass = {**user, "password": ""}
+		del user_no_pass["password"]
+		return user_no_pass
 
