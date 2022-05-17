@@ -227,7 +227,8 @@ def update_drill_set(current_user, *args, **kwargs):
 def login():
     try:
         data = request.json
-        if not data:
+        form = request.form
+        if not data or not form:
             return {
                 "message": "Please provide user details",
                 "data": None,
