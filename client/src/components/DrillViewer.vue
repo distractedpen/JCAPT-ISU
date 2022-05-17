@@ -1,5 +1,12 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
+import { MediaRecorder, register } from "extendable-media-recorder";
+import { connect } from "extendable-media-recorder-wav-encoder";
+
+const setupWavEncoder = async () => {
+  await register(await connect());
+};
+setupWavEncoder();
 
 const props = defineProps(["drillSet", "currentListeningURL", "result"]);
 const emit = defineEmits(["fetchAudio", "fetchResult"]);
