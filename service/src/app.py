@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import sys, json, os, time, signal
+import sys, json, os, time, signal, shutil
 import uuid, jwt
 from dotenv import load_dotenv
 from flask import Flask, request, make_response
@@ -16,6 +16,7 @@ from auth_middleware import token_required
 # Env Setup
 ###############################
 
+load_dotenv()
 base_path = os.path.abspath("..")
 env = {
     "DRILL_DIR": os.path.join(base_path, os.getenv("DRILL_DIR")),
@@ -185,11 +186,16 @@ def new_drill_set(current_user, *args, **kwargs):
 @cross_origin()
 @token_required
 def delete_drill_set(current_user, *args, **kwargs):
-    
     data = json.loads(request.data)
     id = data["drillSetId"]
 
     drill_data_handler.remove_drill_set(id)
+
+    audio_dir_path_name = os.path.join(env["AUDIO_DIR"], id)
+    try:
+        shutil.rmtree(audio_dir_path_name)
+    except OSError as e:
+        print(f"Error: {e.filename}, {e.strerror}")
 
     return {"status": "success"}
 
@@ -198,7 +204,6 @@ def delete_drill_set(current_user, *args, **kwargs):
 @cross_origin()
 @token_required
 def update_drill_set(current_user, *args, **kwargs):
-    
     id = request.form["drillSetId"]
     audio_dir = os.path.join(env["AUDIO_DIR"], id)
     num_sentences = int(request.form["num_sentences"])
@@ -211,10 +216,14 @@ def update_drill_set(current_user, *args, **kwargs):
     
     # Save Audio to Correct directory
     for filename in audio:
-        pathname = os.path.join(audio_dir, filename)
-        os.remove(pathname)
-        audio_data = request.files[filename[:-4]]
-        audio_data.save(pathname)
+        try:
+            pathname = os.path.join(audio_dir, filename)
+            if os.path.exists(pathname):
+                os.remove(pathname)
+            audio_data = request.files[filename[:-4]]
+            audio_data.save(pathname)
+        except FileNotFoundError:
+            pass
     
     return {"status": "success"}
 

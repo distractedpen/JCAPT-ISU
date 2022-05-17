@@ -80,7 +80,6 @@ const addSentence = () => {
 
 const saveDrillSet = () => {
   let formData = new FormData();
-
   formData.append("num_sentences", state.drillSet.sentences.length);
   formData.append("name", state.drillSet.name);
   state.drillSet.sentences.forEach((sentence, index) => {
@@ -118,6 +117,7 @@ const fetchCreate = async (formData) => {
 };
 
 const fetchUpdate = async (formData) => {
+  formData.append("drillSetId", state.drillSet.id);
   const response = service.formDataAPI("updateDrillSet", formData);
   response.then((json) => {
     if (json.status == "success") {
