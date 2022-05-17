@@ -48,16 +48,26 @@ watch(currentSentence, () => {
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   console.log("getUserMedia supported.");
   navigator.mediaDevices
-    .getUserMedia({ audio: true })
+    .getUserMedia({
+      audio: {
+        sampleSize: 48,
+        channelCount: { max: 1 },
+      },
+    })
     .then((stream) => {
-      mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
+      mediaRecorder = new MediaRecorder(stream, {
+        audioBitsPerSecond: 48000,
+        mimeType: "audio/wav",
+      });
       mediaRecorder.onstart = () => (state.isRecording = true);
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         state.isRecording = false;
         const blob = new Blob(chunks);
         chunks = [];
-        state.audioURL = window.URL.createObjectURL(blob);
+        state.audioURL = window.URL.createObjectURL(blob, {
+          mimeType: "audio/wav",
+        });
         state.hasAudio = true;
         audio.value.src = state.audioURL;
         audio.value.controls = true;
@@ -68,7 +78,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
         emit("fetchResult", blob, currentSentence);
       };
-      console.log(mediaRecorder);
     })
     .catch(function (err) {
       console.log("The following getUserMedia error occurred: " + err);

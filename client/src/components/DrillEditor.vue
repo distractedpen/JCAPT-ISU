@@ -15,7 +15,6 @@ const emit = defineEmits([
 ]);
 
 const computed_drillSet = computed(() => {
-  console.log(props.drillSet);
   return { ...props.drillSet };
 });
 

@@ -1,5 +1,5 @@
-from vosk import Model, KaldiRecognizer, SetLogLevel
-import sys, os, wave
+from vosk import Model, KaldiRecognizer
+import wave
 
 
 class WavParser():

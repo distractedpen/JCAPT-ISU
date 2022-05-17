@@ -2,7 +2,7 @@
 import DrillManager from "../components/DrillManager.vue";
 import DrillEditor from "../components/DrillEditor.vue";
 import PageHeader from "../components/PageHeader.vue";
-import { reactive, watch, ref } from "vue";
+import { reactive, ref } from "vue";
 import service from "../service/service.js";
 
 const state = reactive({
@@ -21,7 +21,7 @@ const resetState = () => {
   state.drillSet = {};
   state.drillSetAudioFiles = {};
   state.listeningURLs = {};
-}
+};
 
 const statusRef = ref(null);
 const messageTimeOut = (type, message) => {
@@ -32,10 +32,6 @@ const messageTimeOut = (type, message) => {
     statusRef.value.style.color = "black";
   }, 2000);
 };
-
-watch(state.drillSet, () => {
-  console.log(state.drillSet);
-});
 
 const getDrillSet = (drillSet) => {
   state.drillSet = drillSet;
@@ -55,13 +51,11 @@ const onNameChange = (newName) => {
 
 const onSentenceChange = (index, newText) => {
   state.drillSet.sentences[index] = newText;
-  console.log(state.drillSet);
 };
 
 const onAudioChange = (index, audioFile) => {
   state.drillSetAudioFiles[index] = audioFile;
   state.listeningURLs[index] = window.URL.createObjectURL(audioFile);
-  console.log(state.drillSet);
 };
 
 const deleteSentence = (index) => {
@@ -73,7 +67,6 @@ const deleteSentence = (index) => {
   }
   state.drillSet.sentences.splice(index, 1);
   state.drillSet.audio.splice(index, 1);
-  console.log(state.drillSet);
 };
 
 const addSentence = () => {

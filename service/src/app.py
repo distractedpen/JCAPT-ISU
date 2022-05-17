@@ -1,7 +1,7 @@
 ###############################
 # Imports
 ###############################
-import sys, json, subprocess, os, time, signal
+import sys, json, os, time, signal
 import uuid, jwt
 
 from flask import Flask, request, make_response
@@ -49,7 +49,6 @@ file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
 
 JWT_SECRET_KEY = os.environ.get("CAPT_FLASK_JWT_KEY") or "This is a test key."
-print(JWT_SECRET_KEY)
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 ###############################
@@ -115,23 +114,10 @@ def test():
 
         id = request.form["id"]
         index = int(request.form["index"])
-
         audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
         audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
-
-
-        # convert data from ogg to wav using a subprocess
-        # with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
-        #     subprocess.run(
-        #         ["ffmpeg",
-        #          "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
-        #          "-ar", "48000", "-ac", "1",
-        #          os.path.join(env["RECORDING_DIR"], file_name+".wav")],
-        #          stdout=subprocess.PIPE, stderr=fd)
-
-
 
         result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
@@ -139,8 +125,6 @@ def test():
         correct = drill_data_handler.get_sentence(id, index)
 
         str_alignment = compare_results(result["text"], correct)
-
-        
 
         if result:
             return { "status": "success", "result": str_alignment}
@@ -228,7 +212,6 @@ def update_drill_set(current_user, *args, **kwargs):
     name = request.form["name"]
     sentences = [ request.form["sentence"+str(i)] for i in range(num_sentences)]
     audio = [ key + ".wav" for key in request.files.keys()]
-    print(audio)
     # Create new Drill Set
     new_drill_set = {"name": name, "sentences": sentences, "audio": audio}
     drill_data_handler.update_drill_set(id, new_drill_set)
@@ -251,7 +234,6 @@ def update_drill_set(current_user, *args, **kwargs):
 def login():
     try:
         data = request.json
-        print(data)
         if not data:
             return {
                 "message": "Please provide user details",
@@ -267,19 +249,14 @@ def login():
                 "data": None,
                 "error": "Invalid data"
             }, 400
-        print("logging user in")
         user = UserHandler().login(data["email"], data["password"])
-        print(f"{user=}")
         if user:
             try:
-                print("user id", user["id"])
-                print(f"{app.config['JWT_SECRET_KEY']=}")
                 user["token"] = jwt.encode(
                     {"user_id": user["id"]},
                     app.config["JWT_SECRET_KEY"],
                     algorithm="HS256"
                 )
-                print(f"{user['token']=}")
                 return {
                     "message": "Successfully fetched auth token",
                     "data": user
