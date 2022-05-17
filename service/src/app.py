@@ -228,7 +228,7 @@ def login():
     try:
         data = request.json
         form = request.form
-        if not data or not form:
+        if not (data or form):
             return {
                 "message": "Please provide user details",
                 "data": None,
