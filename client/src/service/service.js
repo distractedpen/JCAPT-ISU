@@ -14,6 +14,28 @@ function addAuth() {
   }
 }
 
+async function login(body) {
+  const payload = {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body,
+  };
+
+  try {
+    const response = await fetch(`${SERVICE_URL}/login`, payload).then(
+      (response) => response.json()
+    );
+
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 async function jsonAPI(endpoint, body) {
   const payload = {
     method: "POST",
@@ -81,6 +103,7 @@ async function formDataAPI(endpoint, formdata) {
 }
 
 export default {
+  login,
   jsonAPI,
   blobAPI,
   formDataAPI,
