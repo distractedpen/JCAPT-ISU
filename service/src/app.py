@@ -119,17 +119,17 @@ def test():
         audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
-        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".ogg"))
+        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
 
 
         # convert data from ogg to wav using a subprocess
-        with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
-            subprocess.run(
-                ["ffmpeg",
-                 "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
-                 "-ar", "48000", "-ac", "1",
-                 os.path.join(env["RECORDING_DIR"], file_name+".wav")],
-                 stdout=subprocess.PIPE, stderr=fd)
+        # with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
+        #     subprocess.run(
+        #         ["ffmpeg",
+        #          "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
+        #          "-ar", "48000", "-ac", "1",
+        #          os.path.join(env["RECORDING_DIR"], file_name+".wav")],
+        #          stdout=subprocess.PIPE, stderr=fd)
 
 
 
