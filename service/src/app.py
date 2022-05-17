@@ -3,7 +3,7 @@
 ###############################
 import sys, json, os, time, signal
 import uuid, jwt
-
+from dotenv import load_dotenv
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -16,24 +16,19 @@ from auth_middleware import token_required
 # Env Setup
 ###############################
 
-os.chdir("../..")
-base_path = os.getcwd()
-drill_pathname = os.path.join(os.getcwd(), "service/drills")
-log_pathname = os.path.join(os.getcwd(), "service/logs")
-model_pathname = os.path.join(os.getcwd(), "service/model")
-ssl_pathname = os.path.join(os.getcwd(), "ssl");
-
+base_path = os.path.abspath("..")
 env = {
-    "DRILL_DIR": drill_pathname,
-    "AUDIO_DIR": os.path.join(drill_pathname, "audio"),
-    "RECORDING_DIR": os.path.join(drill_pathname, "audio/recordings"),
-    "LOG_DIR": log_pathname,
-    "MODEL_DIR": model_pathname,
-    "SSL_DIR": ssl_pathname,
-    "DEBUG": False
+    "DRILL_DIR": os.path.join(base_path, os.getenv("DRILL_DIR")),
+    "AUDIO_DIR": os.path.join(base_path, os.getenv("AUDIO_DIR")),
+    "RECORDING_DIR": os.path.join(base_path, os.getenv("RECORDING_DIR")),
+    "LOG_DIR": os.path.join(base_path, os.getenv("LOG_DIR")),
+    "MODEL_DIR": os.path.join(base_path, os.getenv("MODEL_DIR")),
+    "SSL_DIR": os.path.join(base_path, os.getenv("SSL_DIR")),
+    "DEBUG": bool(int(os.getenv("CAPT_DEBUG")))
 }
 
-print(env)
+if env["DEBUG"]:
+    print(env)
 
 
 ################################
@@ -47,9 +42,7 @@ wav_parser = WavParser(env["MODEL_DIR"])
 
 file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
-
-JWT_SECRET_KEY = os.environ.get("CAPT_FLASK_JWT_KEY") or "This is a test key."
-app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+app.config['JWT_SECRET_KEY'] = os.environ.get("CAPT_FLASK_JWT_KEY")
 
 ###############################
 #  Helper Functions
