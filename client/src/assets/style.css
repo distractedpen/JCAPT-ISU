@@ -10,26 +10,35 @@ h1 {
 	font-size:  32px;
 }
 
-button {
+select {
+	font-size:  24px;
+	margin: 10px;
+}
+
+input {
+	margin: 10px;
+	width: 250px;
+}
+
+.btn {
 	background-color: #eee;
 	border:  none;
-	font-size:  24px;
+	font-size:  18px;
 	width:  100px;
 	height:  50px;
 	margin: 10px;
 	flex-shrink: 1;	
 }
 
-.next {
-	width: 50px;
-	height: 50px;
+.btn-long {
+	background-color: #eee;
+	border:  none;
+	font-size:  18px;
+	width:  150px;
+	height:  50px;
+	margin: 10px;
+	flex-shrink: 1;		
 }
-
-.previous {
-	width: 50px;
-	height: 50px;
-}
-
 
 .page-header {
 	display: flex;
@@ -40,29 +49,17 @@ button {
 .container {
 	display: flex;
 	flex-direction: column;
+	text-align: center;
 	align-items: center;
+	padding: 20px;
 }
 
-.sound-clip {
+.small-content {
 	display: flex;
-	justify-content: center;
+	flex-direction:  column;
+	text-align: center;
 	align-items: center;
-	height: 50px;
-	width:  100%;
-}
-
-.text-container {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-}
-
-.sen-text {
-	font-size: 20px;
-	margin:  10px;
-}
-
-.listen-audio {
-	visibility: hidden;
-	position: absolute;
+	flex: 1;
+	margin-left: 10px;
+	margin-right: 10px;
 }

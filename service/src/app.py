@@ -1,36 +1,35 @@
 ###############################
 # Imports
 ###############################
-import sys, json, subprocess, os, time, signal
-import uuid
+import sys, json, os, time, signal, shutil
+import uuid, jwt
+from dotenv import load_dotenv
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 from DrillSetHandler import DrillSetHandler
 from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
-
+from UserHandler import UserHandler
+from auth_middleware import token_required
 
 ###############################
 # Env Setup
 ###############################
-os.chdir("../..")
-base_path = os.getcwd()
-drill_pathname = os.path.join(os.getcwd(), "service/drills")
-log_pathname = os.path.join(os.getcwd(), "service/logs")
-model_pathname = os.path.join(os.getcwd(), "service/model")
-ssl_pathname = os.path.join(os.getenv("HOME"), "ssl_certs")
 
+load_dotenv()
+base_path = os.path.abspath("..")
 env = {
-    "DRILL_DIR": drill_pathname,
-    "AUDIO_DIR": os.path.join(drill_pathname, "audio"),
-    "RECORDING_DIR": os.path.join(drill_pathname, "audio/recordings"),
-    "LOG_DIR": log_pathname,
-    "MODEL_DIR": model_pathname,
-    "SSL_DIR": ssl_pathname,
-    "DEBUG": False
+    "DRILL_DIR": os.path.join(base_path, os.getenv("DRILL_DIR")),
+    "AUDIO_DIR": os.path.join(base_path, os.getenv("AUDIO_DIR")),
+    "RECORDING_DIR": os.path.join(base_path, os.getenv("RECORDING_DIR")),
+    "LOG_DIR": os.path.join(base_path, os.getenv("LOG_DIR")),
+    "MODEL_DIR": os.path.join(base_path, os.getenv("MODEL_DIR")),
+    "SSL_DIR": os.path.join(base_path, os.getenv("SSL_DIR")),
+    "DEBUG": bool(int(os.getenv("CAPT_DEBUG")))
 }
 
-print(env)
+if env["DEBUG"]:
+    print(env)
 
 
 ################################
@@ -44,6 +43,7 @@ wav_parser = WavParser(env["MODEL_DIR"])
 
 file_name_padding = 0
 drill_data_handler = DrillSetHandler(env["DRILL_DIR"] + "/drills.json")
+app.config['JWT_SECRET_KEY'] = os.environ.get("CAPT_FLASK_JWT_KEY")
 
 ###############################
 #  Helper Functions
@@ -89,7 +89,7 @@ def compare_results(result, correct):
 # App Routes (End Points)
 ##############################
 
-
+# /status
 @app.route("/status", methods=["GET", "POST"])
 @cross_origin()
 def status():
@@ -98,6 +98,7 @@ def status():
     return {"status": "online", "method": "GET"}
 
 
+# /results
 @app.route("/results", methods=["POST"])
 @cross_origin()
 def test():
@@ -107,23 +108,10 @@ def test():
 
         id = request.form["id"]
         index = int(request.form["index"])
-
         audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
-        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".ogg"))
-
-
-        # convert data from ogg to wav using a subprocess
-        with open(os.path.join(log_pathname, "convert.log"), "w") as fd:
-            subprocess.run(
-                ["ffmpeg",
-                 "-i", os.path.join(env["RECORDING_DIR"], file_name+".ogg"),
-                 "-ar", "48000", "-ac", "1",
-                 os.path.join(env["RECORDING_DIR"], file_name+".wav")],
-                 stdout=subprocess.PIPE, stderr=fd)
-
-
+        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
 
         result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
         result = json.loads(result)
@@ -132,18 +120,18 @@ def test():
 
         str_alignment = compare_results(result["text"], correct)
 
-        
-
         if result:
             return { "status": "success", "result": str_alignment}
         return {"status": "failure", "result": ""}
 
+# /getDrillSets
 @app.route("/getDrillSets", methods=["GET", "POST"])
 @cross_origin()
 def get_drill_sets():
     drill_sets = drill_data_handler.get_drill_sets()
     return {"drill_sets": drill_sets}
 
+# /getDrillSet
 @app.route("/getDrillSet", methods=["POST"])
 @cross_origin()
 def get_drill_set():
@@ -152,7 +140,7 @@ def get_drill_set():
     drill_set_data = drill_data_handler.get_drill_set(drill_set_id) 
     return {"drillSet": drill_set_data}
 
-
+# /getAudio
 @app.route("/getAudio", methods=["POST"])
 @cross_origin()
 def get_sentence_audio():
@@ -167,9 +155,11 @@ def get_sentence_audio():
 
         return make_response((audio_data, {"Content-Type": "audio/mpeg"}))
 
+# /newDrillSet
 @app.route("/newDrillSet", methods=["POST"])
 @cross_origin()
-def new_drill_set():
+@token_required
+def new_drill_set(current_user, *args, **kwargs):
     
     id = str(uuid.uuid4())
     new_audio_dir = os.path.join(env["AUDIO_DIR"], id)
@@ -191,41 +181,107 @@ def new_drill_set():
     
     return {"status": "success"}
 
-
+# /deleteDrillSet
 @app.route("/deleteDrillSet", methods=["POST"])
 @cross_origin()
-def delete_drill_set():
-    
+@token_required
+def delete_drill_set(current_user, *args, **kwargs):
     data = json.loads(request.data)
     id = data["drillSetId"]
 
     drill_data_handler.remove_drill_set(id)
 
+    audio_dir_path_name = os.path.join(env["AUDIO_DIR"], id)
+    try:
+        shutil.rmtree(audio_dir_path_name)
+    except OSError as e:
+        print(f"Error: {e.filename}, {e.strerror}")
+
     return {"status": "success"}
 
+# /updateDrillSet
 @app.route("/updateDrillSet", methods=["POST"])
 @cross_origin()
-def update_drill_set():
-    
+@token_required
+def update_drill_set(current_user, *args, **kwargs):
     id = request.form["drillSetId"]
     audio_dir = os.path.join(env["AUDIO_DIR"], id)
     num_sentences = int(request.form["num_sentences"])
     name = request.form["name"]
     sentences = [ request.form["sentence"+str(i)] for i in range(num_sentences)]
     audio = [ key + ".wav" for key in request.files.keys()]
-    print(audio)
     # Create new Drill Set
     new_drill_set = {"name": name, "sentences": sentences, "audio": audio}
     drill_data_handler.update_drill_set(id, new_drill_set)
     
     # Save Audio to Correct directory
     for filename in audio:
-        pathname = os.path.join(audio_dir, filename)
-        os.remove(pathname)
-        audio_data = request.files[filename[:-4]]
-        audio_data.save(pathname)
+        try:
+            pathname = os.path.join(audio_dir, filename)
+            if os.path.exists(pathname):
+                os.remove(pathname)
+            audio_data = request.files[filename[:-4]]
+            audio_data.save(pathname)
+        except FileNotFoundError:
+            pass
     
     return {"status": "success"}
+
+
+# /login
+# Modified Tutorial from 
+# https://www.loginradius.com/blog/engineering/guest-post/securing-flask-api-with-jwt/
+@app.route("/login", methods=["POST"])
+@cross_origin()
+def login():
+    try:
+        data = request.json
+        if not data:
+            return {
+                "message": "Please provide user details",
+                "data": None,
+                "error": "Bad request"
+            }, 400
+        is_validated = True
+        if data.get("email") is None or data.get("password") is None:
+            is_validated = False
+        if not is_validated:
+            return {
+                "message": "Invalid data",
+                "data": None,
+                "error": "Invalid data"
+            }, 400
+        user = UserHandler().login(data["email"], data["password"])
+        if user:
+            try:
+                user["token"] = jwt.encode(
+                    {"user_id": user["id"]},
+                    app.config["JWT_SECRET_KEY"],
+                    algorithm="HS256"
+                )
+                return {
+                    "message": "Successfully fetched auth token",
+                    "data": user
+                }
+            except Exception as e:
+                return {
+                    "message": "Something went wrong while encoding jwt.",
+                    "error": str(e),
+                    "data": None
+                }, 500
+        return {
+            "message": "Error fetching auth token. Invalid email or password",
+            "data": None,
+            "error": "Unauthorized"
+        }, 404
+    except Exception as e:
+        return {
+            "message": "Something when wrong!",
+            "error": str(e),
+            "data": None
+        }, 500
+
+# /users/authenticate
 
 
 ##############################
