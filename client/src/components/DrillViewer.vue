@@ -43,12 +43,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   navigator.mediaDevices
     .getUserMedia({ audio: true })
     .then((stream) => {
-      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
       mediaRecorder.onstart = () => (state.isRecording = true);
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         state.isRecording = false;
-        const blob = new Blob(chunks, { mimeType: "audio/ogg; codecs=opus" });
+        const blob = new Blob(chunks, { mimeType: "audio/wav" });
         chunks = [];
         state.audioURL = window.URL.createObjectURL(blob);
         state.hasAudio = true;
