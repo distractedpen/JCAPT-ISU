@@ -2,9 +2,11 @@
 
 // eslint-disable-next-line no-undef
 const express = require("express");
+const fs = require("fs");
+const https = require("node:https");
 const app = express();
-const HOST = "localhost";
-const PORT = 8001;
+const HOST = "cs.indstate.edu";
+const PORT = 40088;
 
 app.use(express.static("dist"));
 
@@ -12,6 +14,17 @@ app.get("/", (req, res) => {
   res.send("CAPT-ISU");
 });
 
-app.listen(PORT, () =>
-  console.log(`Server listening on port: http://${HOST}:${PORT}`)
-);
+const key = fs.readFileSync("../ssl/server.key");
+const cert = fs.readFileSync("../ssl/server.crt");
+
+console.log(`Frontend hosted at https://${HOST}:${PORT}/`);
+
+https
+  .createServer(
+    {
+      key: key,
+      cert: cert,
+    },
+    app
+  )
+  .listen(PORT);
