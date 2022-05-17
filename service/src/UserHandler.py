@@ -55,14 +55,10 @@ class UserHandler:
 		return generate_password_hash(password)
 
 	def login(self, email, password):
-		print(f"{email=} {password=}")
 		user = self.get_by_email(email)
-		print(user)
 		if not user or not check_password_hash(user["password"], password):
 			print("password hash failed.")
 			return
-		print("Found User")
-		print("Password accepted.")
 		user_no_pass = {**user, "password": ""}
 		del user_no_pass["password"]
 		return user_no_pass
