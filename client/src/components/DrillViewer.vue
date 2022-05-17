@@ -55,7 +55,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         state.isRecording = false;
-        const blob = new Blob(chunks, { mimeType: "audio/wav" });
+        const blob = new Blob(chunks);
         chunks = [];
         state.audioURL = window.URL.createObjectURL(blob);
         state.hasAudio = true;
