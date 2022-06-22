@@ -1,12 +1,5 @@
 <script setup>
 import { ref, reactive, watch } from "vue";
-import { MediaRecorder, register } from "extendable-media-recorder";
-import { connect } from "extendable-media-recorder-wav-encoder";
-
-const setupWavEncoder = async () => {
-  await register(await connect());
-};
-setupWavEncoder();
 
 const props = defineProps(["drillSet", "currentListeningURL", "result"]);
 const emit = defineEmits(["fetchAudio", "fetchResult"]);
@@ -49,16 +42,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   console.log("getUserMedia supported.");
   navigator.mediaDevices
     .getUserMedia({
-      audio: {
-        sampleSize: 48,
-        channelCount: { max: 1 },
-      },
+      audio: true,
     })
     .then((stream) => {
-      mediaRecorder = new MediaRecorder(stream, {
-        audioBitsPerSecond: 48000,
-        mimeType: "audio/wav",
-      });
+      mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.onstart = () => (state.isRecording = true);
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
@@ -66,7 +53,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const blob = new Blob(chunks);
         chunks = [];
         state.audioURL = window.URL.createObjectURL(blob, {
-          mimeType: "audio/wav",
+          audioBitsPerSecond: 48000,
+          mimeType: "audio/ogg",
         });
         state.hasAudio = true;
         audio.value.src = state.audioURL;

@@ -2,7 +2,7 @@
 # Imports
 ###############################
 import sys, json, os, time, signal, shutil
-import uuid, jwt
+import uuid, jwt, subprocess
 from dotenv import load_dotenv
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
@@ -111,14 +111,29 @@ def test():
         audio_data = request.files['audio']
         file_name = str(int(time.time())) + str(file_name_padding).zfill(4)
         file_name_padding = ( file_name_padding + 1 ) % 9999 # 0000
-        audio_data.save(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
+        ogg_file = os.path.join(env["RECORDING_DIR"], file_name+".ogg")
+        wav_file = os.path.join(env["RECORDING_DIR"], file_name+".wav")
+        audio_data.save(ogg_file)
 
-        result = wav_parser.analyze(os.path.join(env["RECORDING_DIR"], file_name+".wav"))
+        with open(os.path.join(env["LOG_DIR"], "convert.log")) as fd:
+            subprocess.run(
+                ["ffmpeg",
+                "-i", ogg_file,
+                "-ar", "48000", "-ac", "1",
+                wav_file],
+                stdout=subprocess.PIPE, stderr=fd)
+
+        result = wav_parser.analyze(wav_file)
         result = json.loads(result)
 
         correct = drill_data_handler.get_sentence(id, index)
 
         str_alignment = compare_results(result["text"], correct)
+
+        if os.path.exists(ogg_file):
+            os.remove(ogg_file)
+        if os.path.exists(wav_file):
+            os.remove(wav_file)
 
         if result:
             return { "status": "success", "result": str_alignment}
