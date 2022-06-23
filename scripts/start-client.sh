@@ -1,0 +1,1 @@
+docker run --init --publish 40088:40088 jcapt-client
