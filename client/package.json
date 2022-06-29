@@ -11,8 +11,6 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "express": "^4.18.1",
-    "extendable-media-recorder": "^6.6.5",
-    "extendable-media-recorder-wav-encoder": "^7.0.68",
     "vue": "^3.2.33",
     "vue-router": "^4.0.14"
   },
