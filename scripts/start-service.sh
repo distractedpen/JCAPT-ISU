@@ -1,0 +1,1 @@
+docker run --init --publish 40089:40089 jcapt-service

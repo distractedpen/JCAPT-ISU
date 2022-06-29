@@ -3,7 +3,6 @@
 ###############################
 import sys, json, os, time, signal, shutil
 import uuid, jwt, subprocess
-from dotenv import load_dotenv
 from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
@@ -16,15 +15,13 @@ from auth_middleware import token_required
 # Env Setup
 ###############################
 
-load_dotenv()
-base_path = os.path.abspath("..")
 env = {
-    "DRILL_DIR": os.path.join(base_path, os.getenv("DRILL_DIR")),
-    "AUDIO_DIR": os.path.join(base_path, os.getenv("AUDIO_DIR")),
-    "RECORDING_DIR": os.path.join(base_path, os.getenv("RECORDING_DIR")),
-    "LOG_DIR": os.path.join(base_path, os.getenv("LOG_DIR")),
-    "MODEL_DIR": os.path.join(base_path, os.getenv("MODEL_DIR")),
-    "SSL_DIR": os.path.join(base_path, os.getenv("SSL_DIR")),
+    "DRILL_DIR": os.getenv("DRILL_DIR"),
+    "AUDIO_DIR": os.getenv("AUDIO_DIR"),
+    "RECORDING_DIR": os.getenv("RECORDING_DIR"),
+    "LOG_DIR": os.getenv("LOG_DIR"),
+    "MODEL_DIR": os.getenv("MODEL_DIR"),
+    "USERS_DIR": os.getenv("USERS_DIR"),
     "DEBUG": bool(int(os.getenv("CAPT_DEBUG")))
 }
 
@@ -303,4 +300,3 @@ def login():
 # Start App
 ##############################
 signal.signal(signal.SIGINT, recording_cleanup_handler)
-# app.run("0.0.0.0", port=8000, ssl_context=(env["SSL_DIR"]+"/server.crt", env["SSL_DIR"]+"/server.key"))

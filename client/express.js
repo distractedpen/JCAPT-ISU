@@ -4,9 +4,12 @@
 const express = require("express");
 const fs = require("fs");
 const https = require("node:https");
+const dotenv = require("dotenv");
+dotenv.config();
+
 const app = express();
-const HOST = "cs.indstate.edu";
-const PORT = 40088;
+const HOST = process.env.EXPRESS_CLIENT_HOST;
+const PORT = process.env.EXPRESS_CLIENT_PORT;
 
 app.use(express.static("dist"));
 

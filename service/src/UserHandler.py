@@ -1,13 +1,15 @@
-import json
+import json, os
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 
-with open("../users/users.json") as fd:
+users_file = os.path.join(os.getenv("USERS_DIR"), "users.json")
+
+with open(users_file) as fd:
 	users = json.loads(fd.read())
 
 
 def save_data():
-	with open("../users/users/json") as fd:
+	with open(users_file) as fd:
 		fd.write(json.dumps(users))
 
 class UserHandler:
