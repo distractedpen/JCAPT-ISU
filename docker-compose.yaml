@@ -1,0 +1,30 @@
+services:
+  jcapt-service:
+    build:
+      context: .
+      dockerfile: service.Dockerfile
+    environment:
+      - FLASK_APP=./src/app.py
+      - FLASK_SERVICE_HOST=0.0.0.0
+      - FLASK_SERVICE_PORT=40089
+      - DRILL_DIR=drills
+      - AUDIO_DIR=drills/audio
+      - RECORDING_DIR=drills/audio/recordings
+      - LOG_DIR=logs
+      - MODEL_DIR=model
+      - SSL_DIR=../ssl
+      - USERS_DIR=users
+      - CAPT_DEBUG=0
+      - CAPT_FLASK_JWT_KEY=f3168cf2dfa34cbcbc8de3e57a35c184
+    volumes:
+      - ./service/drills:/home/app/service/drills:rw
+      - ./service/logs:/home/app/service/logs:rw
+      - ./service/users:/home/app/service/users:rw 
+    ports:
+      - "40089:40089"
+  jcapt-client:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    ports:
+      - "40088:40088"

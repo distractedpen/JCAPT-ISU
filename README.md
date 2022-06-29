@@ -11,25 +11,19 @@ The `client` directory is the frontend. When the service is running (see `servic
 The `scripts` directory currently contains the startup script for the service, `start_service.sh`. This currently only works on Linux.
 
 The `service` directory contains the following subdirectories:
-    `audio` - currently a drop point for audio files recieved from `client` and a place for the service to convert the `.ogg` files to `.wav` files. Currently files are deleted after they are used by vosk for speech to text. Currently looking at how these audio files should be stored.
 
-    `logs` - currently a drop point for the log text outputted by `ffmpeg`. Will also be the place for `vosk` to output its log information.
+    `logs` - a persistent directory to store the log text outputted by `ffmpeg`. Will also be the place for `vosk` to output its log information.
 
     `src` - source code for the service.
 
-    `text` - currenty a drop point for the text files used by the service.
+    `drills` - a persistent directory to store all drill sets and audio
 
+    `users` - a persistent directory to store all user information
 
 #How to Use:
 
-    - System currently only works on Linux.
-    - Requires python3.9 and pipenv for backend.
-    - Requires node 17 and vite for frontend.
-    - TODO: Add scripts to install dependencies.
-    - Download a model from https://alphacephei.com/vosk/models. Extract the archive and rename the directory to `model`. Place new `model` directory in the `service` directory.
-    - Run ./scripts/start_service.sh to start the flask backend.
-    - cd to /client/src and run `npm run dev`
-    - TODO: Add Script to run both client and service together.
-    - open hosted link to client page.
-        - Run aleady made drill sets from the index page.
-        - Go to the `/admin.html` endpoint directly to create, edit, and delete drill sets.
+    - Run containers by running `docker-compose up -d`
+    - Client default runs on port 40088
+    - Service default runs on port 40089
+    - To change port numbers, edit the first number under 'ports' for each service in the docker-compose.yaml file.
+    - Use docker-compose down to rm the containers
