@@ -7,8 +7,9 @@ from flask import Flask, request, make_response
 from flask_cors import CORS, cross_origin
 from srparser import WavParser
 from DrillSetHandler import DrillSetHandler
-from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
 from UserHandler import UserHandler
+from NWAlignment import print_dp_table, print_align_table, print_str_align, make_dp_table, determine_alignment
+
 from auth_middleware import token_required
 
 ###############################
@@ -27,6 +28,7 @@ env = {
 
 if env["DEBUG"]:
     print(env)
+
 
 
 ################################

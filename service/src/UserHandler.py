@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 users_file = os.path.join(os.getenv("USERS_DIR"), "users.json")
 
 with open(users_file) as fd:
-	users = json.loads(fd.read())
+    users = json.loads(fd.read())
 
 
 def save_data():
