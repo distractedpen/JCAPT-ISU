@@ -10,7 +10,7 @@ docker run -d --rm \
     jcapt-client
 
 # service start
-docker run --rm \
+docker run -d --rm \
     --network jcapt-network \
     --env-file ../.env-service \
     -v /home/zach/projects/jcapt-isu/service/drills:/home/app/service/drills \
